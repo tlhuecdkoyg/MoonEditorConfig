@@ -42,6 +42,15 @@ fn trim(value : String) -> String {
 }
 
 ///|
+fn remove_utf8_bom(line : String, line_number : Int) -> String {
+  if line_number == 1 && line.get_char(0) is Some('\u{FEFF}') {
+    line[1:].to_owned()
+  } else {
+    line
+  }
+}
+
+///|
 fn parse_pair(line : String, line_number : Int) -> Property? {
   let separator = line.find("=")
   match separator {
@@ -68,7 +77,10 @@ pub fn parse(source : String) -> ParseResult {
   let mut line_number = 0
   for raw_line in source.split("\n") {
     line_number += 1
-    let line = trim(raw_line.to_owned().trim_end().to_owned())
+    let line = remove_utf8_bom(
+      trim(raw_line.to_owned().trim_end().to_owned()),
+      line_number,
+    )
     if line == "" || line.has_prefix("#") || line.has_prefix(";") {
       continue
     }

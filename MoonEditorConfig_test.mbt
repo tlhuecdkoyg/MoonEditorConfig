@@ -12,6 +12,16 @@ test "parse sections and source locations" {
 }
 
 ///|
+test "accept UTF-8 BOM on the first line" {
+  let result = @MoonEditorConfig.parse(
+    "\u{FEFF}root = true\n[*.mbt]\nindent_size = 2\n",
+  )
+  assert_true(result.config.root)
+  assert_eq(result.config.sections.length(), 1)
+  assert_eq(result.diagnostics.length(), 0)
+}
+
+///|
 test "parse invalid lines as diagnostics" {
   let result = @MoonEditorConfig.parse("[*.mbt]\ninvalid line\n")
   assert_eq(result.diagnostics.length(), 1)
