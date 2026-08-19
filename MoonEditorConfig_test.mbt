@@ -17,3 +17,11 @@ test "parse invalid lines as diagnostics" {
   assert_eq(result.diagnostics.length(), 1)
   assert_eq(result.diagnostics[0].line, 2)
 }
+
+///|
+test "match basic EditorConfig globs" {
+  assert_true(@MoonEditorConfig.glob_matches("*.mbt", "parser.mbt"))
+  assert_true(@MoonEditorConfig.glob_matches("src/??.mbt", "src/io.mbt"))
+  assert_false(@MoonEditorConfig.glob_matches("*.mbt", "README.md"))
+  assert_false(@MoonEditorConfig.glob_matches("src/*.mbt", "test/io.mbt"))
+}
