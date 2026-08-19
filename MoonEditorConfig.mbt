@@ -46,7 +46,7 @@ fn parse_pair(line : String, line_number : Int) -> Property? {
   let separator = line.find("=")
   match separator {
     Some(index) => {
-      let key = trim(line[:index].to_owned())
+      let key = trim(line[:index].to_owned()).to_lower()
       let value = trim(line[index + 1:].to_owned())
       if key == "" {
         None
@@ -83,6 +83,13 @@ pub fn parse(source : String) -> ParseResult {
         source: { line: line_number },
       }
       current_section = Some(section)
+      continue
+    }
+    if line.has_prefix("[") {
+      diagnostics.push({
+        line: line_number,
+        message: "section header must end with ]",
+      })
       continue
     }
     match parse_pair(line, line_number) {

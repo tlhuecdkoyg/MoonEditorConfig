@@ -19,6 +19,14 @@ test "parse invalid lines as diagnostics" {
 }
 
 ///|
+test "normalize keys and diagnose malformed section headers" {
+  let result = @MoonEditorConfig.parse("[*.mbt]\nIndent_Size = 2\n[broken\n")
+  assert_eq(result.config.sections[0].properties[0].key, "indent_size")
+  assert_eq(result.diagnostics.length(), 1)
+  assert_eq(result.diagnostics[0].line, 3)
+}
+
+///|
 test "match basic EditorConfig globs" {
   assert_true(@MoonEditorConfig.glob_matches("*.mbt", "parser.mbt"))
   assert_true(@MoonEditorConfig.glob_matches("src/??.mbt", "src/io.mbt"))
