@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: MoonBit checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Toolchain information
+        run: moon version --all
+
+      - name: Resolve dependencies
+        run: moon update
+
+      - name: Check every backend
+        run: moon check --target all --deny-warn
+
+      - name: Run tests
+        run: moon test --target all --deny-warn
+
+      - name: Verify formatting
+        run: moon fmt --check
+
+      - name: Verify public interface
+        run: |
+          moon info
+          git diff --exit-code
+
+      - name: Build CLI
+        run: moon build --target native --release cmd/main
+
+      - name: Build Studio
+        run: moon build --target js --release web/app

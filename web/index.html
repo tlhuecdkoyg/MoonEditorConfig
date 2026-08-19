@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="MoonEditorConfig 可视化配置解析、匹配和继承诊断工作台">
+  <title>MoonEditorConfig Studio｜配置解析与诊断中心</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="logo">M</span><span><b>MoonEditorConfig</b><small>配置解析与诊断中心</small></span></a>
+    <div class="top-actions"><span id="status" class="status busy">正在启动 MoonBit 引擎…</span><button id="theme" class="ghost">明暗主题</button><button id="export">导出报告</button></div>
+  </header>
+  <main>
+    <section class="hero">
+      <div><span class="eyebrow">EDITORCONFIG ENGINE · MOONBIT</span><h1>让每一次配置覆盖<br><em>都有迹可循</em></h1><p>实时解析配置、验证属性、测试 Glob，并展示目标文件最终值的完整来源。</p></div>
+      <div id="score-ring" class="score-ring"><strong id="score">—</strong><small>配置健康度</small></div>
+    </section>
+    <section class="stats">
+      <div><strong id="section-count">0</strong><span>配置节</span></div><div><strong id="match-count">0</strong><span>已匹配</span></div><div><strong id="property-count">0</strong><span>最终属性</span></div><div><strong id="diagnostic-count">0</strong><span>诊断</span></div>
+    </section>
+    <section class="workspace">
+      <article class="panel editor-panel">
+        <header><div><span class="kicker">配置源码</span><h2>.editorconfig 编辑器</h2></div><div><button id="copy" class="ghost">复制</button><button id="format">格式化</button></div></header>
+        <label class="target-label"><span>要解析的目标文件</span><input id="target" value="src/parser/main.mbt" spellcheck="false"></label>
+        <div class="examples"><span>加载示例</span><button data-example="moonbit">MoonBit 项目</button><button data-example="hierarchy">复杂 Glob</button><button data-example="broken">错误配置</button></div>
+        <div class="code-wrap"><pre id="lines">1</pre><textarea id="source" spellcheck="false" aria-label="EditorConfig 源码">root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[*.mbt]
+indent_style = space
+indent_size = 2
+
+[src/**.mbt]
+max_line_length = 100
+</textarea></div>
+        <footer id="source-meta">13 行</footer>
+      </article>
+      <div class="results">
+        <article class="panel"><header><div><span class="kicker">解析结果</span><h2>最终有效属性</h2></div></header><div id="properties" class="property-list"></div></article>
+        <article class="panel"><header><div><span class="kicker">匹配追踪</span><h2>配置段决策过程</h2></div></header><div id="trace" class="trace-list"></div></article>
+      </div>
+    </section>
+    <section class="panel diagnostics-panel"><header><div><span class="kicker">质量检查</span><h2>诊断与改进建议</h2></div></header><div id="diagnostics" class="diagnostic-list"></div></section>
+  </main>
+  <footer class="site-footer"><span>MoonBit 驱动 · 本地运行 · 不上传配置内容</span><a href="../README.md">使用文档</a></footer>
+  <script type="module" src="../_build/js/release/build/web/app/app.js"></script>
+</body>
+</html>

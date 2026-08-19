@@ -1,0 +1,366 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "tlhuecdkoyg/MoonEditorConfig"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn analyze_conflicts(EditorConfig) -> Array[ConfigConflict]
+
+pub fn analyze_glob(String) -> GlobMetrics
+
+pub fn apply_edits(String, Array[TextEdit]) -> String
+
+pub fn audit(EditorConfig, initial? : Array[Diagnostic]) -> QualityReport
+
+pub fn compile_glob(String) -> GlobProgram
+
+pub fn conflict_count_by_kind(Array[ConfigConflict], ConflictKind) -> Int
+
+pub fn diff_hunks(String, String, context? : Int) -> Array[DiffHunk]
+
+pub fn diff_lines(String, String) -> Array[DiffLine]
+
+pub fn discover_virtual_configs(Array[VirtualFile], String) -> (Array[ConfigLayer], Array[Diagnostic])
+
+pub fn evaluate_glob(String, Array[String]) -> Array[GlobCase]
+
+pub fn explain_glob(String, String) -> String
+
+pub fn format_config(EditorConfig, options? : FormatOptions) -> String
+
+pub fn format_diff(String) -> String
+
+pub fn glob_complexity_warning(String, threshold? : Int) -> String?
+
+pub fn glob_examples(String) -> Array[String]
+
+pub fn glob_matches(String, String) -> Bool
+
+pub fn glob_overlap_witness(String, String) -> String?
+
+pub fn glob_specificity(String) -> Int
+
+pub fn group_targets_by_property(Array[WorkspaceResult], String) -> Map[String, Array[String]]
+
+pub fn has_errors(Array[Diagnostic]) -> Bool
+
+pub fn needs_formatting(String, options? : FormatOptions) -> Bool
+
+pub fn normalize_path(String) -> String
+
+pub fn parent_path(String) -> String?
+
+pub fn parse(String) -> ParseResult
+
+pub fn parse_document(String, String) -> ParseResult
+
+pub fn parse_with_options(String, ParseOptions) -> ParseResult
+
+pub fn plan_fixes(String) -> FixPlan
+
+pub fn property_schema(String) -> PropertySchema?
+
+pub fn relative_path(String, String) -> String?
+
+pub fn resolve(EditorConfig, String) -> Array[ResolvedProperty]
+
+pub fn resolve_layers(Array[ConfigLayer], String) -> Resolution
+
+pub fn resolve_workspace(Array[VirtualFile], String) -> WorkspaceResult
+
+pub fn resolve_workspace_batch(Array[VirtualFile], Array[String]) -> Array[WorkspaceResult]
+
+pub fn standard_property_schemas() -> Array[PropertySchema]
+
+pub fn studio_snapshot(String, String) -> String
+
+pub fn summarize(EditorConfig) -> String
+
+pub fn uncovered_targets(Array[WorkspaceResult]) -> Array[String]
+
+pub fn unified_diff(String, String, old_name? : String, new_name? : String, context? : Int) -> String
+
+pub fn validate(EditorConfig) -> Array[Diagnostic]
+
+pub fn validate_edits(Array[TextEdit], Int) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub(all) struct ConfigConflict {
+  kind : ConflictKind
+  key : String
+  first_pattern : String
+  second_pattern : String
+  first_value : String
+  second_value : String
+  witness_path : String?
+  first_line : Int
+  second_line : Int
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn ConfigConflict::render_zh(Self) -> String
+
+pub(all) struct ConfigLayer {
+  path : String
+  directory : String
+  config : EditorConfig
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ConflictKind {
+  DuplicateAssignment
+  RedundantAssignment
+  OverlappingSections
+  ConflictingSections
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Diagnostic {
+  line : Int
+  severity : Severity
+  code : String
+  message : String
+  hint : String
+  span : SourceSpan
+} derive(Eq, @debug.Debug)
+pub fn Diagnostic::render_zh(Self) -> String
+
+pub(all) struct DiffHunk {
+  old_start : Int
+  old_count : Int
+  new_start : Int
+  new_count : Int
+  lines : Array[DiffLine]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DiffKind {
+  Unchanged
+  Added
+  Removed
+} derive(Eq, @debug.Debug)
+
+pub(all) struct DiffLine {
+  kind : DiffKind
+  old_line : Int?
+  new_line : Int?
+  content : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct EditorConfig {
+  path : String
+  root : Bool
+  preamble : Array[Property]
+  sections : Array[Section]
+  source_text : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Finding {
+  code : String
+  severity : Severity
+  category : FindingCategory
+  title : String
+  detail : String
+  suggestion : String
+  span : SourceSpan
+} derive(Eq, @debug.Debug)
+
+pub(all) enum FindingCategory {
+  Syntax
+  Correctness
+  Maintainability
+  Portability
+  Style
+} derive(Eq, @debug.Debug)
+
+pub(all) struct FixPlan {
+  edits : Array[TextEdit]
+  safe_count : Int
+  review_count : Int
+  safe_source : String
+  diff : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct FormatOptions {
+  indent : String
+  separator : String
+  final_newline : Bool
+  sort_properties : Bool
+} derive(Eq, @debug.Debug)
+pub fn FormatOptions::default() -> Self
+
+pub(all) struct GlobCase {
+  path : String
+  matched : Bool
+  explanation : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct GlobMetrics {
+  literals : Int
+  separators : Int
+  single_wildcards : Int
+  recursive_wildcards : Int
+  character_classes : Int
+  alternatives : Int
+  estimated_states : Int
+  matches_directories : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct GlobProgram {
+  source : String
+  alternatives : Array[Array[GlobToken]]
+  diagnostics : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn GlobProgram::matches(Self, String) -> Bool
+
+pub(all) enum GlobToken {
+  Literal(UInt16)
+  Separator
+  AnyCharacter
+  AnySegment
+  AnyPath
+  CharacterClass(chars~ : Array[UInt16], ranges~ : Array[(UInt16, UInt16)], negated~ : Bool)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ParseOptions {
+  path : String
+  allow_colon_separator : Bool
+  warn_duplicate_keys : Bool
+  warn_unknown_preamble : Bool
+} derive(Eq, @debug.Debug)
+pub fn ParseOptions::default() -> Self
+
+pub(all) struct ParseResult {
+  config : EditorConfig
+  diagnostics : Array[Diagnostic]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Property {
+  key : String
+  value : String
+  raw_key : String
+  raw_value : String
+  source : SourceLocation
+  span : SourceSpan
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PropertyKind {
+  Choice(Array[String])
+  Boolean
+  PositiveInteger
+  PositiveIntegerOrTab
+  FreeText
+} derive(Eq, @debug.Debug)
+
+pub(all) struct PropertySchema {
+  name : String
+  kind : PropertyKind
+  description : String
+  standard : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct PropertyStep {
+  key : String
+  value : String
+  config_path : String
+  pattern : String
+  line : Int
+  action : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct QualityReport {
+  score : Int
+  grade : String
+  stats : QualityStats
+  findings : Array[Finding]
+} derive(Eq, @debug.Debug)
+pub fn QualityReport::has_blockers(Self) -> Bool
+pub fn QualityReport::summary_zh(Self) -> String
+
+pub(all) struct QualityStats {
+  sections : Int
+  properties : Int
+  standard_properties : Int
+  custom_properties : Int
+  errors : Int
+  warnings : Int
+  information : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Resolution {
+  target : String
+  properties : Array[ResolvedProperty]
+  sections : Array[SectionTrace]
+  diagnostics : Array[Diagnostic]
+} derive(Eq, @debug.Debug)
+pub fn Resolution::explain_zh(Self) -> String
+pub fn Resolution::get(Self, String) -> ResolvedProperty?
+pub fn Resolution::to_json(Self, indent? : Bool) -> String
+
+pub(all) struct ResolvedProperty {
+  key : String
+  value : String
+  source : SourceLocation
+  pattern : String
+  config_path : String
+  history : Array[PropertyStep]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Section {
+  pattern : String
+  properties : Array[Property]
+  source : SourceLocation
+  span : SourceSpan
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SectionTrace {
+  config_path : String
+  pattern : String
+  matched : Bool
+  relative_path : String
+  line : Int
+  reason : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Severity {
+  Error
+  Warning
+  Information
+} derive(Eq, @debug.Debug)
+pub fn Severity::label_zh(Self) -> String
+
+pub(all) struct SourceLocation {
+  file : String
+  line : Int
+  column : Int
+  offset : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SourceSpan {
+  start : SourceLocation
+  end : SourceLocation
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TextEdit {
+  start_offset : Int
+  end_offset : Int
+  replacement : String
+  title : String
+  safe : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct VirtualFile {
+  path : String
+  content : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct WorkspaceResult {
+  target : String
+  discovered_configs : Array[String]
+  resolution : Resolution
+  diagnostics : Array[Diagnostic]
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

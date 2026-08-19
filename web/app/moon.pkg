@@ -1,0 +1,7 @@
+import {
+  "tlhuecdkoyg/MoonEditorConfig" @lib,
+}
+
+supported_targets = "js"
+
+pkgtype(kind: "executable")
