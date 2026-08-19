@@ -27,6 +27,16 @@ test "normalize keys and diagnose malformed section headers" {
 }
 
 ///|
+test "validate known property values but keep unknown keys" {
+  let result = @MoonEditorConfig.parse(
+    "[*.mbt]\nindent_style = tabs\nmy_custom_editor_flag = enabled\n",
+  )
+  let diagnostics = @MoonEditorConfig.validate(result.config)
+  assert_eq(diagnostics.length(), 1)
+  assert_eq(diagnostics[0].line, 2)
+}
+
+///|
 test "match basic EditorConfig globs" {
   assert_true(@MoonEditorConfig.glob_matches("*.mbt", "parser.mbt"))
   assert_true(@MoonEditorConfig.glob_matches("src/??.mbt", "src/io.mbt"))
