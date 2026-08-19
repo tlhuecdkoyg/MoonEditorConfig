@@ -1,0 +1,5 @@
+// import {
+//   "tlhuecdkoyg/MoonEditorConfig" @lib,
+// }
+
+pkgtype(kind: "executable")
