@@ -1,5 +1,8 @@
-// import {
-//   "tlhuecdkoyg/MoonEditorConfig" @lib,
-// }
+import {
+  "tlhuecdkoyg/MoonEditorConfig" @lib,
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
+}
 
 pkgtype(kind: "executable")

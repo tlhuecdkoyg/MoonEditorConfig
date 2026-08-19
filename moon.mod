@@ -24,3 +24,7 @@ keywords = [ "editorconfig", "glob", "formatter", "diagnostics", "moonbit" ]
 preferred_target = "native"
 
 description = "An explainable EditorConfig core and style diagnostics toolkit for MoonBit projects."
+
+import {
+  "moonbitlang/x@0.5.1",
+}
