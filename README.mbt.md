@@ -28,6 +28,7 @@ MoonEditorConfig 是使用 MoonBit 编写的 EditorConfig 核心库，面向需�
 - 基础 Glob 匹配
 - 匹配配置段后的属性合并
 - 属性来源和配置段来源追踪
+- 中文 CLI `check` 命令和可运行示例
 
 ## 开发命令
 
@@ -35,9 +36,24 @@ MoonEditorConfig 是使用 MoonBit 编写的 EditorConfig 核心库，面向需�
 moon fmt
 moon check --deny-warn
 moon test --deny-warn
+moon run cmd/main -- check examples/valid.editorconfig
 ```
 
-命令行工具将在核心数据模型和解析流程稳定后继续加入。
+检查配置文件：
+
+```powershell
+moon run cmd/main -- check path/to/.editorconfig
+```
+
+没有发现诊断时输出：
+
+```text
+通过：未发现配置诊断
+```
+
+命令退出码为：`0` 表示通过，`1` 表示发现诊断，`2` 表示参数错误或文件读取失败。
+
+后续将继续加入目标文件路径解析、配置来源解释和 JSON 输出。
 
 ## 许可证
 
