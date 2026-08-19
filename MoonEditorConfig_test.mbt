@@ -25,3 +25,16 @@ test "match basic EditorConfig globs" {
   assert_false(@MoonEditorConfig.glob_matches("*.mbt", "README.md"))
   assert_false(@MoonEditorConfig.glob_matches("src/*.mbt", "test/io.mbt"))
 }
+
+///|
+test "resolve later matching sections over earlier values" {
+  let result = @MoonEditorConfig.parse(
+    "[*.mbt]\nindent_size = 2\nindent_style = space\n[src/*.mbt]\nindent_size = 4\n",
+  )
+  let resolved = @MoonEditorConfig.resolve(result.config, "src/main.mbt")
+  assert_eq(resolved.length(), 2)
+  assert_eq(resolved[0].key, "indent_size")
+  assert_eq(resolved[0].value, "4")
+  assert_eq(resolved[0].source.line, 5)
+  assert_eq(resolved[0].pattern, "src/*.mbt")
+}
