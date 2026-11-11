@@ -5,9 +5,9 @@ fn virtual_project() -> Array[@MoonEditorConfig.VirtualFile] {
       path: "/repo/.editorconfig",
       content: "root = true\n[*]\ncharset = utf-8\nindent_size = 4\n",
     },
-    { path: "/repo/src/.editorconfig", content: "[*.mbt]\nindent_size = 2\n" },
-    { path: "/repo/src/main.mbt", content: "fn main {}\n" },
-    { path: "/repo/README.md", content: "# Project\n" },
+    { path: "/repo/src/.editorconfig", content: "[*.mbt]\nindent_size = 2\n", },
+    { path: "/repo/src/main.mbt", content: "fn main {}\n", },
+    { path: "/repo/README.md", content: "# Project\n", },
   ]
 }
 
@@ -26,7 +26,7 @@ test "workspace/discovers leaf and root configs" {
 ///|
 test "workspace/stops at root true" {
   let files = virtual_project()
-  files.push({ path: "/.editorconfig", content: "[*]\ncharset = latin1\n" })
+  files.push({ path: "/.editorconfig", content: "[*]\ncharset = latin1\n", })
   let result = @MoonEditorConfig.resolve_workspace(files, "/repo/src/main.mbt")
   assert_eq(result.discovered_configs.length(), 2)
   assert_eq(result.resolution.get("charset").unwrap().value, "utf-8")
@@ -65,7 +65,7 @@ test "workspace/missing configs is valid empty result" {
 ///|
 test "workspace/parse diagnostics preserve config path" {
   let files : Array[@MoonEditorConfig.VirtualFile] = [
-    { path: "/repo/.editorconfig", content: "root = maybe\n[*.mbt\n" },
+    { path: "/repo/.editorconfig", content: "root = maybe\n[*.mbt\n", },
   ]
   let result = @MoonEditorConfig.resolve_workspace(files, "/repo/main.mbt")
   assert_eq(result.diagnostics.length(), 3)

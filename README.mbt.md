@@ -1,5 +1,7 @@
 # MoonEditorConfig
 
+当前维护版本：`0.1.1`。
+
 MoonEditorConfig 是使用 MoonBit 编写的 EditorConfig 解析、验证、配置解析与
 来源追踪工具。它既可以作为 MoonBit 库使用，也提供中文 CLI 和完全在本地运行的
 可视化 Studio。
@@ -24,9 +26,15 @@ MoonEditorConfig 是使用 MoonBit 编写的 EditorConfig 解析、验证、配�
 
 ## 环境要求
 
-- MoonBit `0.1.20260814` 或更新版本
+- 已验证的工具链基线：`moonc v0.10.20+65efd5b93`
+  （构建日期 2026-11-05），配套 `moon` / `moonrun 0.1.20261104 (940aa18)`
+  （构建日期 2026-11-04）。
+- 依赖 `moonbitlang/x 0.5.7`。
 - 启动 Studio 时需要 Node.js；本项目环境已包含
   `D:\conda\environments\moonbit\node.exe`
+
+2026-11-11 的兼容维护及验证范围见[维护记录](docs/MAINTENANCE-20261111.md)；
+首次本地迁移的历史结果见[工具链升级记录](docs/TOOLCHAIN-20261109.md)。
 
 检查环境：
 
@@ -55,6 +63,7 @@ D:\conda\environments\moonbit\moonbit-toolchain\bin\moon.exe test --deny-warn
 
 ```powershell
 moon run cmd/main -- check path/to/.editorconfig
+moon run cmd/main -- --version
 ```
 
 解析目标文件的最终配置；命令会自动向父目录发现 `.editorconfig`：
@@ -63,6 +72,16 @@ moon run cmd/main -- check path/to/.editorconfig
 moon run cmd/main -- resolve src/main.mbt
 moon run cmd/main -- resolve src/main.mbt --json
 ```
+
+仓库内提供了可直接复现的两层配置示例：
+
+```powershell
+moon run cmd/main -- resolve examples/workspace/src/main.mbt --json
+moon run cmd/main -- query examples/workspace/src/main.mbt indent_size
+```
+
+该示例继承根层的 `charset = utf-8`，并由子目录配置将 `indent_size` 覆盖为 `2`。
+解析以目标路径为依据，不要求目标源码文件已经存在。
 
 显示匹配和覆盖过程：
 
@@ -130,30 +149,37 @@ powershell -ExecutionPolicy Bypass -File scripts\serve.ps1
 
 解析和验证：
 
-```mbt nocheck
+```mbt check
 ///|
-let parsed = @MoonEditorConfig.parse_document(
-  "/repo/.editorconfig", "root = true\n[*.mbt]\nindent_size = 2\n",
-)
-
-///|
-let diagnostics = @MoonEditorConfig.validate(parsed.config)
+test "README parses and validates a document" {
+  let parsed = @MoonEditorConfig.parse_document(
+    "/repo/.editorconfig", "root = true\n[*.mbt]\nindent_size = 2\n",
+  )
+  assert_true(parsed.config.root)
+  assert_eq(parsed.diagnostics.length(), 0)
+  assert_eq(@MoonEditorConfig.validate(parsed.config).length(), 0)
+}
 ```
 
 使用内存工作区解析层级配置：
 
-```mbt nocheck
+```mbt check
 ///|
-let files : Array[@MoonEditorConfig.VirtualFile] = [
-  {
-    path: "/repo/.editorconfig",
-    content: "root = true\n[*]\ncharset = utf-8\n",
-  },
-  { path: "/repo/src/.editorconfig", content: "[*.mbt]\nindent_size = 2\n" },
-]
-
-///|
-let result = @MoonEditorConfig.resolve_workspace(files, "/repo/src/main.mbt")
+test "README resolves a configuration hierarchy" {
+  let files : Array[@MoonEditorConfig.VirtualFile] = [
+    {
+      path: "/repo/.editorconfig",
+      content: "root = true\n[*]\ncharset = utf-8\n",
+    },
+    { path: "/repo/src/.editorconfig", content: "[*.mbt]\nindent_size = 2\n", },
+  ]
+  let result = @MoonEditorConfig.resolve_workspace(files, "/repo/src/main.mbt")
+  assert_eq(result.diagnostics.length(), 0)
+  assert_eq(result.resolution.get("charset").unwrap().value, "utf-8")
+  let indent = result.resolution.get("indent_size").unwrap()
+  assert_eq(indent.value, "2")
+  assert_eq(indent.config_path, "/repo/src/.editorconfig")
+}
 ```
 
 ## 项目结构
@@ -184,14 +210,16 @@ web/                   页面与样式
 
 ```powershell
 moon check --target all --deny-warn
-moon test --deny-warn
+moon test --target all --deny-warn
 moon fmt --check
 moon info
+moon build --target all --release
 moon build --target native --release cmd/main
 moon build --target js --release web/app
 ```
 
-GitHub Actions 会执行相同的检查。测试覆盖解析、无效输入、Glob、路径、层级解析、
+GitHub Actions 配置在 Linux 上执行相同的后端检查，并使用 Node.js 22 运行 JavaScript。
+测试覆盖解析、无效输入、Glob、路径、层级解析、
 属性验证、格式化、JSON、虚拟工作区、质量审计、Diff、修复计划和配置冲突。
 
 ## 规范与兼容边界

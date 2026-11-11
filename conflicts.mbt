@@ -1,12 +1,14 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum ConflictKind {
   DuplicateAssignment
   RedundantAssignment
   OverlappingSections
   ConflictingSections
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct ConfigConflict {
   kind : ConflictKind
   key : String
@@ -15,10 +17,10 @@ pub(all) struct ConfigConflict {
   first_value : String
   second_value : String
   witness_path : String?
-  first_line : Int
-  second_line : Int
+  first_line : Int32
+  second_line : Int32
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn same_scope_conflicts(
@@ -129,7 +131,7 @@ pub fn ConfigConflict::render_zh(self : ConfigConflict) -> String {
 pub fn conflict_count_by_kind(
   conflicts : Array[ConfigConflict],
   kind : ConflictKind,
-) -> Int {
+) -> Int32 {
   conflicts.fold(init=0, (count, conflict) => {
     count + (if conflict.kind == kind { 1 } else { 0 })
   })

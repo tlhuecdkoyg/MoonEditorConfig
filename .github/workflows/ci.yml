@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  MOONBIT_INSTALL_VERSION: 0.10.20+65efd5b93
+
 jobs:
   check:
     name: MoonBit checks
@@ -15,6 +18,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Install MoonBit
         run: |
@@ -43,6 +51,9 @@ jobs:
 
       - name: Build CLI
         run: moon build --target native --release cmd/main
+
+      - name: Build every backend
+        run: moon build --target all --release
 
       - name: Build Studio
         run: moon build --target js --release web/app

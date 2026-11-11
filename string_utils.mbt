@@ -14,7 +14,7 @@ fn is_space_code(code : UInt16) -> Bool {
 }
 
 ///|
-fn first_non_space(value : String) -> Int {
+fn first_non_space(value : String) -> Int32 {
   for index in 0..<value.length() {
     if !is_space_code(value[index]) {
       return index
@@ -24,7 +24,7 @@ fn first_non_space(value : String) -> Int {
 }
 
 ///|
-fn last_non_space_end(value : String) -> Int {
+fn last_non_space_end(value : String) -> Int32 {
   for index = value.length(); index > 0; index = index - 1 {
     if !is_space_code(value[index - 1]) {
       return index
@@ -43,7 +43,7 @@ fn strip_utf8_bom(value : String, first_line : Bool) -> String {
 }
 
 ///|
-fn find_unescaped_separator(value : String, allow_colon : Bool) -> Int? {
+fn find_unescaped_separator(value : String, allow_colon : Bool) -> Int32? {
   let mut escaped = false
   for index in 0..<value.length() {
     let code = value[index]
@@ -60,7 +60,7 @@ fn find_unescaped_separator(value : String, allow_colon : Bool) -> Int? {
 
 ///|
 fn unescape_assignment(value : String) -> String {
-  let buffer = StringBuilder::new()
+  let buffer = StringBuilder()
   let mut escaped = false
   for ch in value {
     if escaped {
@@ -85,7 +85,7 @@ fn unescape_assignment(value : String) -> String {
 
 ///|
 fn json_escape(value : String) -> String {
-  let buffer = StringBuilder::new()
+  let buffer = StringBuilder()
   for ch in value {
     match ch {
       '"' => buffer.write_string("\\\"")

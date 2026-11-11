@@ -93,7 +93,7 @@ fn trace_json(trace : SectionTrace) -> String {
 }
 
 ///|
-pub fn Resolution::to_json(self : Resolution, indent? : Bool = false) -> String {
+pub fn Resolution::to_json(self : Resolution, indent~ : Bool = false) -> String {
   let properties : Array[String] = []
   let sections : Array[String] = []
   let diagnostics : Array[String] = []
@@ -124,7 +124,7 @@ pub fn Resolution::to_json(self : Resolution, indent? : Bool = false) -> String 
 
 ///|
 fn pretty_json(compact : String) -> String {
-  let output = StringBuilder::new()
+  let output = StringBuilder()
   let mut depth = 0
   let mut quoted = false
   let mut escaped = false

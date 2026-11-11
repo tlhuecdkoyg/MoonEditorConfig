@@ -1,14 +1,15 @@
 ///|
+#derive(Debug, Eq)
 pub(all) struct FormatOptions {
   indent : String
   separator : String
   final_newline : Bool
   sort_properties : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn FormatOptions::default() -> FormatOptions {
-  { indent: "", separator: " = ", final_newline: true, sort_properties: false }
+  { indent: "", separator: " = ", final_newline: true, sort_properties: false, }
 }
 
 ///|
@@ -33,7 +34,7 @@ fn format_properties(
 /// Render a canonical representation of a parsed EditorConfig document.
 pub fn format_config(
   config : EditorConfig,
-  options? : FormatOptions = FormatOptions::default(),
+  options~ : FormatOptions = FormatOptions::default(),
 ) -> String {
   let lines : Array[String] = []
   if config.root {
@@ -67,7 +68,7 @@ pub fn format_config(
 ///|
 pub fn needs_formatting(
   source : String,
-  options? : FormatOptions = FormatOptions::default(),
+  options~ : FormatOptions = FormatOptions::default(),
 ) -> Bool {
   let parsed = parse(source)
   format_config(parsed.config, options~) != source

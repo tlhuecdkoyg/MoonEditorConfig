@@ -13,6 +13,7 @@ fn usage() -> String {
     #|  moon run cmd/main -- audit <.editorconfig>
     #|  moon run cmd/main -- diff <.editorconfig>
     #|  moon run cmd/main -- conflicts <.editorconfig>
+    #|  moon run cmd/main -- --version
     #|
     #|退出码：0 = 成功，1 = 发现错误或未匹配，2 = 参数/文件错误
   )
@@ -83,7 +84,7 @@ fn discover_layers(
       match read_source(candidate) {
         Some(source) => {
           let parsed = @lib.parse_document(candidate, source)
-          layers.push({ path: candidate, directory, config: parsed.config })
+          layers.push({ path: candidate, directory, config: parsed.config, })
           for diagnostic in parsed.diagnostics {
             diagnostics.push(diagnostic)
           }
@@ -303,6 +304,7 @@ fn run_conflicts(path : String) -> Unit {
 ///|
 fn main {
   match @env.args() {
+    [_, "--version"] | [_, "-V"] => println("MoonEditorConfig 0.1.1")
     [_, "check", path] => run_check(path)
     [_, "resolve", path] => run_resolve(path, false)
     [_, "resolve", path, "--json"] => run_resolve(path, true)

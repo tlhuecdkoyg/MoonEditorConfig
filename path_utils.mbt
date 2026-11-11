@@ -1,7 +1,7 @@
 ///|
 /// Normalize separators and remove redundant `.` path segments.
 pub fn normalize_path(path : String) -> String {
-  let replaced = StringBuilder::new()
+  let replaced = StringBuilder()
   for ch in path {
     if ch == '\\' {
       replaced.write_char('/')
@@ -77,7 +77,7 @@ fn basename(path : String) -> String {
 }
 
 ///|
-fn last_separator(path : String) -> Int? {
+fn last_separator(path : String) -> Int32? {
   for index = path.length(); index > 0; index = index - 1 {
     if path[index - 1] == '/' {
       return Some(index - 1)
@@ -87,11 +87,11 @@ fn last_separator(path : String) -> Int? {
 }
 
 ///|
-fn path_depth(path : String) -> Int {
+fn path_depth(path : String) -> Int32 {
   let normalized = normalize_path(path)
   if normalized == "" {
     0
   } else {
-    normalized.split("/").length()
+    normalized.split("/").count()
   }
 }

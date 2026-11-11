@@ -12,6 +12,9 @@ on:
     paths:
       - .github/workflows/copilot-setup-steps.yml
 
+env:
+  MOONBIT_INSTALL_VERSION: 0.10.20+65efd5b93
+
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
   copilot-setup-steps:

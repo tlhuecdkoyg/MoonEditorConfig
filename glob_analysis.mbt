@@ -1,26 +1,28 @@
 ///|
+#derive(Debug, Eq)
 pub(all) struct GlobMetrics {
-  literals : Int
-  separators : Int
-  single_wildcards : Int
-  recursive_wildcards : Int
-  character_classes : Int
-  alternatives : Int
-  estimated_states : Int
+  literals : Int32
+  separators : Int32
+  single_wildcards : Int32
+  recursive_wildcards : Int32
+  character_classes : Int32
+  alternatives : Int32
+  estimated_states : Int32
   matches_directories : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct GlobCase {
   path : String
   matched : Bool
   explanation : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn token_metrics(token : GlobToken, metrics : GlobMetrics) -> GlobMetrics {
   match token {
-    Literal(_) => { ..metrics, literals: metrics.literals + 1 }
+    Literal(_) => { ..metrics, literals: metrics.literals + 1, }
     Separator =>
       {
         ..metrics,
@@ -28,7 +30,7 @@ fn token_metrics(token : GlobToken, metrics : GlobMetrics) -> GlobMetrics {
         matches_directories: true,
       }
     AnyCharacter | AnySegment =>
-      { ..metrics, single_wildcards: metrics.single_wildcards + 1 }
+      { ..metrics, single_wildcards: metrics.single_wildcards + 1, }
     AnyPath =>
       {
         ..metrics,
@@ -36,7 +38,7 @@ fn token_metrics(token : GlobToken, metrics : GlobMetrics) -> GlobMetrics {
         matches_directories: true,
       }
     CharacterClass(..) =>
-      { ..metrics, character_classes: metrics.character_classes + 1 }
+      { ..metrics, character_classes: metrics.character_classes + 1, }
   }
 }
 
@@ -73,7 +75,7 @@ pub fn analyze_glob(pattern : String) -> GlobMetrics {
 
 ///|
 /// A stable score used only to compare how specific two matching patterns are.
-pub fn glob_specificity(pattern : String) -> Int {
+pub fn glob_specificity(pattern : String) -> Int32 {
   let metrics = analyze_glob(pattern)
   metrics.literals * 10 +
   metrics.character_classes * 4 +
@@ -92,7 +94,7 @@ pub fn evaluate_glob(
   let cases : Array[GlobCase] = []
   for path in paths {
     let matched = glob_matches(pattern, path)
-    cases.push({ path, matched, explanation: explain_glob(pattern, path) })
+    cases.push({ path, matched, explanation: explain_glob(pattern, path), })
   }
   cases
 }
@@ -102,7 +104,7 @@ fn replace_token_samples(
   tokens : Array[GlobToken],
   wildcard : String,
 ) -> String {
-  let output = StringBuilder::new()
+  let output = StringBuilder()
   for token in tokens {
     match token {
       Literal(code) => output.write_char(code.unsafe_to_char())
@@ -165,7 +167,7 @@ pub fn glob_overlap_witness(left : String, right : String) -> String? {
 /// so this is a maintainability signal rather than a vulnerability verdict.
 pub fn glob_complexity_warning(
   pattern : String,
-  threshold? : Int = 500,
+  threshold~ : Int32 = 500,
 ) -> String? {
   let metrics = analyze_glob(pattern)
   if metrics.estimated_states > threshold {

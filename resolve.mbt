@@ -2,7 +2,7 @@
 fn find_property_index(
   properties : Array[ResolvedProperty],
   key : String,
-) -> Int? {
+) -> Int32? {
   for index, property in properties {
     if property.key == key {
       return Some(index)
@@ -180,7 +180,7 @@ pub fn resolve_layers(
     }
   }
   apply_derived_properties(properties)
-  { target: normalize_path(target), properties, sections: traces, diagnostics }
+  { target: normalize_path(target), properties, sections: traces, diagnostics, }
 }
 
 ///|

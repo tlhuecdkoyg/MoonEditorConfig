@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum GlobToken {
   Literal(UInt16)
   Separator
@@ -10,17 +11,18 @@ pub(all) enum GlobToken {
     ranges~ : Array[(UInt16, UInt16)],
     negated~ : Bool
   )
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct GlobProgram {
   source : String
   alternatives : Array[Array[GlobToken]]
   diagnostics : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
-fn find_closing_brace(pattern : String, start : Int) -> Int? {
+fn find_closing_brace(pattern : String, start : Int32) -> Int32? {
   let mut escaped = false
   for index in start..<pattern.length() {
     let code = pattern[index]
@@ -56,7 +58,7 @@ fn split_brace_items(content : String) -> Array[String] {
 }
 
 ///|
-fn parse_decimal(value : String) -> Int? {
+fn parse_decimal(value : String) -> Int32? {
   if value == "" {
     return None
   }
@@ -170,8 +172,8 @@ fn expand_braces(pattern : String) -> Array[String] {
 ///|
 fn parse_character_class(
   pattern : String,
-  start : Int,
-) -> (GlobToken, Int, String?) {
+  start : Int32,
+) -> (GlobToken, Int32, String?) {
   let mut index = start + 1
   let mut negated = false
   if index < pattern.length() &&
@@ -268,7 +270,7 @@ pub fn compile_glob(pattern : String) -> GlobProgram {
       diagnostics.push(issue)
     }
   }
-  { source: pattern, alternatives, diagnostics }
+  { source: pattern, alternatives, diagnostics, }
 }
 
 ///|
@@ -294,8 +296,8 @@ fn class_contains(
 fn match_tokens(
   tokens : Array[GlobToken],
   path : String,
-  token_index : Int,
-  path_index : Int,
+  token_index : Int32,
+  path_index : Int32,
   failed : Map[String, Bool],
 ) -> Bool {
   let key = token_index.to_string() + ":" + path_index.to_string()

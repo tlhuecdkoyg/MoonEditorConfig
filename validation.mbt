@@ -1,19 +1,21 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum PropertyKind {
   Choice(Array[String])
   Boolean
   PositiveInteger
   PositiveIntegerOrTab
   FreeText
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct PropertySchema {
   name : String
   kind : PropertyKind
   description : String
   standard : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn standard_property_schemas() -> Array[PropertySchema] {

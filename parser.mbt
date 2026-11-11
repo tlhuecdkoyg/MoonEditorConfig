@@ -6,15 +6,15 @@ priv struct ParserState {
   diagnostics : Array[Diagnostic]
   mut current_section : Section?
   mut root : Bool
-  mut offset : Int
+  mut offset : Int32
 }
 
 ///|
 fn ParserState::diagnose(
   self : ParserState,
-  line : Int,
-  column : Int,
-  end_column : Int,
+  line : Int32,
+  column : Int32,
+  end_column : Int32,
   severity : Severity,
   code : String,
   message : String,
@@ -108,7 +108,7 @@ fn ParserState::push_property(self : ParserState, property : Property) -> Unit {
 fn ParserState::parse_section(
   self : ParserState,
   line : String,
-  line_number : Int,
+  line_number : Int32,
 ) -> Bool {
   guard line.has_prefix("[") else { return false }
   if !line.has_suffix("]") {
@@ -156,7 +156,7 @@ fn ParserState::parse_section(
 fn ParserState::parse_assignment(
   self : ParserState,
   line : String,
-  line_number : Int,
+  line_number : Int32,
 ) -> Unit {
   match find_unescaped_separator(line, self.options.allow_colon_separator) {
     None =>
@@ -250,7 +250,7 @@ fn ParserState::parse_assignment(
 fn ParserState::parse_line(
   self : ParserState,
   raw_line : String,
-  line_number : Int,
+  line_number : Int32,
 ) -> Unit {
   let without_bom = strip_utf8_bom(raw_line, line_number == 1)
   let line = trim_owned(without_bom.trim_end().to_owned())

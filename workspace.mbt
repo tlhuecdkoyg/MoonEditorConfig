@@ -1,18 +1,20 @@
 ///|
 /// An in-memory file used by browser, test, and editor integrations.
+#derive(Debug, Eq)
 pub(all) struct VirtualFile {
   path : String
   content : String
-} derive(Debug, Eq)
+}
 
 ///|
 /// Result of resolving a target inside a virtual project.
+#derive(Debug, Eq)
 pub(all) struct WorkspaceResult {
   target : String
   discovered_configs : Array[String]
   resolution : Resolution
   diagnostics : Array[Diagnostic]
-} derive(Debug, Eq)
+}
 
 ///|
 fn find_virtual_file(files : Array[VirtualFile], path : String) -> VirtualFile? {

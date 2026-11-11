@@ -1,26 +1,29 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum DiffKind {
   Unchanged
   Added
   Removed
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct DiffLine {
   kind : DiffKind
-  old_line : Int?
-  new_line : Int?
+  old_line : Int32?
+  new_line : Int32?
   content : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct DiffHunk {
-  old_start : Int
-  old_count : Int
-  new_start : Int
-  new_count : Int
+  old_start : Int32
+  old_count : Int32
+  new_start : Int32
+  new_count : Int32
   lines : Array[DiffLine]
-} derive(Debug, Eq)
+}
 
 ///|
 fn source_lines(source : String) -> Array[String] {
@@ -38,10 +41,13 @@ fn source_lines(source : String) -> Array[String] {
 }
 
 ///|
-fn lcs_table(left : Array[String], right : Array[String]) -> Array[Array[Int]] {
-  let table : Array[Array[Int]] = []
+fn lcs_table(
+  left : Array[String],
+  right : Array[String],
+) -> Array[Array[Int32]] {
+  let table : Array[Array[Int32]] = []
   for _ in 0..<=left.length() {
-    let row : Array[Int] = []
+    let row : Array[Int32] = []
     for _ in 0..<=right.length() {
       row.push(0)
     }
@@ -119,7 +125,7 @@ fn is_changed(line : DiffLine) -> Bool {
 }
 
 ///|
-fn clamp_start(value : Int) -> Int {
+fn clamp_start(value : Int32) -> Int32 {
   if value < 0 {
     0
   } else {
@@ -128,8 +134,11 @@ fn clamp_start(value : Int) -> Int {
 }
 
 ///|
-fn hunk_bounds(lines : Array[DiffLine], context : Int) -> Array[(Int, Int)] {
-  let bounds : Array[(Int, Int)] = []
+fn hunk_bounds(
+  lines : Array[DiffLine],
+  context : Int32,
+) -> Array[(Int32, Int32)] {
+  let bounds : Array[(Int32, Int32)] = []
   let mut index = 0
   while index < lines.length() {
     if !is_changed(lines[index]) {
@@ -170,10 +179,14 @@ fn hunk_bounds(lines : Array[DiffLine], context : Int) -> Array[(Int, Int)] {
 }
 
 ///|
-fn make_hunk(lines : Array[DiffLine], start : Int, finish : Int) -> DiffHunk {
+fn make_hunk(
+  lines : Array[DiffLine],
+  start : Int32,
+  finish : Int32,
+) -> DiffHunk {
   let selected : Array[DiffLine] = []
-  let mut old_start : Int? = None
-  let mut new_start : Int? = None
+  let mut old_start : Int32? = None
+  let mut new_start : Int32? = None
   let mut old_count = 0
   let mut new_count = 0
   for index in start..<finish {
@@ -206,7 +219,7 @@ fn make_hunk(lines : Array[DiffLine], start : Int, finish : Int) -> DiffHunk {
 pub fn diff_hunks(
   before : String,
   after : String,
-  context? : Int = 3,
+  context~ : Int32 = 3,
 ) -> Array[DiffHunk] {
   let lines = diff_lines(before, after)
   let hunks : Array[DiffHunk] = []
@@ -232,14 +245,14 @@ fn diff_prefix(kind : DiffKind) -> String {
 pub fn unified_diff(
   before : String,
   after : String,
-  old_name? : String = "a/.editorconfig",
-  new_name? : String = "b/.editorconfig",
-  context? : Int = 3,
+  old_name~ : String = "a/.editorconfig",
+  new_name~ : String = "b/.editorconfig",
+  context~ : Int32 = 3,
 ) -> String {
   if before == after {
     return ""
   }
-  let output = StringBuilder::new()
+  let output = StringBuilder()
   output.write_string("--- " + old_name + "\n")
   output.write_string("+++ " + new_name + "\n")
   for hunk in diff_hunks(before, after, context~) {

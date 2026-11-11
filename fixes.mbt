@@ -1,20 +1,22 @@
 ///|
+#derive(Debug, Eq)
 pub(all) struct TextEdit {
-  start_offset : Int
-  end_offset : Int
+  start_offset : Int32
+  end_offset : Int32
   replacement : String
   title : String
   safe : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct FixPlan {
   edits : Array[TextEdit]
-  safe_count : Int
-  review_count : Int
+  safe_count : Int32
+  review_count : Int32
   safe_source : String
   diff : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn canonical_format_edit(source : String, config : EditorConfig) -> TextEdit? {
@@ -82,7 +84,7 @@ fn ranges_overlap(left : TextEdit, right : TextEdit) -> Bool {
 /// Validate that edits can be applied together without ambiguity.
 pub fn validate_edits(
   edits : Array[TextEdit],
-  source_length : Int,
+  source_length : Int32,
 ) -> Array[String] {
   let errors : Array[String] = []
   for index, edit in edits {
@@ -109,7 +111,7 @@ pub fn validate_edits(
 ///|
 /// Apply non-overlapping edits. Call `validate_edits` first for untrusted data.
 pub fn apply_edits(source : String, edits : Array[TextEdit]) -> String {
-  let output = StringBuilder::new()
+  let output = StringBuilder()
   let ordered = sort_edits_descending(edits)
   let mut result = source
   for edit in ordered {

@@ -16,9 +16,9 @@ pub fn audit(EditorConfig, initial? : Array[Diagnostic]) -> QualityReport
 
 pub fn compile_glob(String) -> GlobProgram
 
-pub fn conflict_count_by_kind(Array[ConfigConflict], ConflictKind) -> Int
+pub fn conflict_count_by_kind(Array[ConfigConflict], ConflictKind) -> Int32
 
-pub fn diff_hunks(String, String, context? : Int) -> Array[DiffHunk]
+pub fn diff_hunks(String, String, context? : Int32) -> Array[DiffHunk]
 
 pub fn diff_lines(String, String) -> Array[DiffLine]
 
@@ -32,7 +32,7 @@ pub fn format_config(EditorConfig, options? : FormatOptions) -> String
 
 pub fn format_diff(String) -> String
 
-pub fn glob_complexity_warning(String, threshold? : Int) -> String?
+pub fn glob_complexity_warning(String, threshold? : Int32) -> String?
 
 pub fn glob_examples(String) -> Array[String]
 
@@ -40,7 +40,7 @@ pub fn glob_matches(String, String) -> Bool
 
 pub fn glob_overlap_witness(String, String) -> String?
 
-pub fn glob_specificity(String) -> Int
+pub fn glob_specificity(String) -> Int32
 
 pub fn group_targets_by_property(Array[WorkspaceResult], String) -> Map[String, Array[String]]
 
@@ -80,15 +80,16 @@ pub fn summarize(EditorConfig) -> String
 
 pub fn uncovered_targets(Array[WorkspaceResult]) -> Array[String]
 
-pub fn unified_diff(String, String, old_name? : String, new_name? : String, context? : Int) -> String
+pub fn unified_diff(String, String, old_name? : String, new_name? : String, context? : Int32) -> String
 
 pub fn validate(EditorConfig) -> Array[Diagnostic]
 
-pub fn validate_edits(Array[TextEdit], Int) -> Array[String]
+pub fn validate_edits(Array[TextEdit], Int32) -> Array[String]
 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct ConfigConflict {
   kind : ConflictKind
   key : String
@@ -97,64 +98,96 @@ pub(all) struct ConfigConflict {
   first_value : String
   second_value : String
   witness_path : String?
-  first_line : Int
-  second_line : Int
+  first_line : Int32
+  second_line : Int32
   message : String
-} derive(Eq, @debug.Debug)
+}
+pub fn ConfigConflict::equal(Self, Self) -> Bool
+pub fn ConfigConflict::not_equal(Self, Self) -> Bool
 pub fn ConfigConflict::render_zh(Self) -> String
+pub fn ConfigConflict::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ConfigLayer {
   path : String
   directory : String
   config : EditorConfig
-} derive(Eq, @debug.Debug)
+}
+pub fn ConfigLayer::equal(Self, Self) -> Bool
+pub fn ConfigLayer::not_equal(Self, Self) -> Bool
+pub fn ConfigLayer::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ConflictKind {
   DuplicateAssignment
   RedundantAssignment
   OverlappingSections
   ConflictingSections
-} derive(Eq, @debug.Debug)
+}
+pub fn ConflictKind::equal(Self, Self) -> Bool
+pub fn ConflictKind::not_equal(Self, Self) -> Bool
+pub fn ConflictKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Diagnostic {
-  line : Int
+  line : Int32
   severity : Severity
   code : String
   message : String
   hint : String
   span : SourceSpan
-} derive(Eq, @debug.Debug)
+}
+pub fn Diagnostic::equal(Self, Self) -> Bool
+pub fn Diagnostic::not_equal(Self, Self) -> Bool
 pub fn Diagnostic::render_zh(Self) -> String
+pub fn Diagnostic::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DiffHunk {
-  old_start : Int
-  old_count : Int
-  new_start : Int
-  new_count : Int
+  old_start : Int32
+  old_count : Int32
+  new_start : Int32
+  new_count : Int32
   lines : Array[DiffLine]
-} derive(Eq, @debug.Debug)
+}
+pub fn DiffHunk::equal(Self, Self) -> Bool
+pub fn DiffHunk::not_equal(Self, Self) -> Bool
+pub fn DiffHunk::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DiffKind {
   Unchanged
   Added
   Removed
-} derive(Eq, @debug.Debug)
+}
+pub fn DiffKind::equal(Self, Self) -> Bool
+pub fn DiffKind::not_equal(Self, Self) -> Bool
+pub fn DiffKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DiffLine {
   kind : DiffKind
-  old_line : Int?
-  new_line : Int?
+  old_line : Int32?
+  new_line : Int32?
   content : String
-} derive(Eq, @debug.Debug)
+}
+pub fn DiffLine::equal(Self, Self) -> Bool
+pub fn DiffLine::not_equal(Self, Self) -> Bool
+pub fn DiffLine::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct EditorConfig {
   path : String
   root : Bool
   preamble : Array[Property]
   sections : Array[Section]
   source_text : String
-} derive(Eq, @debug.Debug)
+}
+pub fn EditorConfig::equal(Self, Self) -> Bool
+pub fn EditorConfig::not_equal(Self, Self) -> Bool
+pub fn EditorConfig::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Finding {
   code : String
   severity : Severity
@@ -163,56 +196,84 @@ pub(all) struct Finding {
   detail : String
   suggestion : String
   span : SourceSpan
-} derive(Eq, @debug.Debug)
+}
+pub fn Finding::equal(Self, Self) -> Bool
+pub fn Finding::not_equal(Self, Self) -> Bool
+pub fn Finding::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FindingCategory {
   Syntax
   Correctness
   Maintainability
   Portability
   Style
-} derive(Eq, @debug.Debug)
+}
+pub fn FindingCategory::equal(Self, Self) -> Bool
+pub fn FindingCategory::not_equal(Self, Self) -> Bool
+pub fn FindingCategory::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FixPlan {
   edits : Array[TextEdit]
-  safe_count : Int
-  review_count : Int
+  safe_count : Int32
+  review_count : Int32
   safe_source : String
   diff : String
-} derive(Eq, @debug.Debug)
+}
+pub fn FixPlan::equal(Self, Self) -> Bool
+pub fn FixPlan::not_equal(Self, Self) -> Bool
+pub fn FixPlan::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FormatOptions {
   indent : String
   separator : String
   final_newline : Bool
   sort_properties : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn FormatOptions::default() -> Self
+pub fn FormatOptions::equal(Self, Self) -> Bool
+pub fn FormatOptions::not_equal(Self, Self) -> Bool
+pub fn FormatOptions::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct GlobCase {
   path : String
   matched : Bool
   explanation : String
-} derive(Eq, @debug.Debug)
+}
+pub fn GlobCase::equal(Self, Self) -> Bool
+pub fn GlobCase::not_equal(Self, Self) -> Bool
+pub fn GlobCase::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct GlobMetrics {
-  literals : Int
-  separators : Int
-  single_wildcards : Int
-  recursive_wildcards : Int
-  character_classes : Int
-  alternatives : Int
-  estimated_states : Int
+  literals : Int32
+  separators : Int32
+  single_wildcards : Int32
+  recursive_wildcards : Int32
+  character_classes : Int32
+  alternatives : Int32
+  estimated_states : Int32
   matches_directories : Bool
-} derive(Eq, @debug.Debug)
+}
+pub fn GlobMetrics::equal(Self, Self) -> Bool
+pub fn GlobMetrics::not_equal(Self, Self) -> Bool
+pub fn GlobMetrics::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct GlobProgram {
   source : String
   alternatives : Array[Array[GlobToken]]
   diagnostics : Array[String]
-} derive(Eq, @debug.Debug)
+}
+pub fn GlobProgram::equal(Self, Self) -> Bool
 pub fn GlobProgram::matches(Self, String) -> Bool
+pub fn GlobProgram::not_equal(Self, Self) -> Bool
+pub fn GlobProgram::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum GlobToken {
   Literal(UInt16)
   Separator
@@ -220,21 +281,33 @@ pub(all) enum GlobToken {
   AnySegment
   AnyPath
   CharacterClass(chars~ : Array[UInt16], ranges~ : Array[(UInt16, UInt16)], negated~ : Bool)
-} derive(Eq, @debug.Debug)
+}
+pub fn GlobToken::equal(Self, Self) -> Bool
+pub fn GlobToken::not_equal(Self, Self) -> Bool
+pub fn GlobToken::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ParseOptions {
   path : String
   allow_colon_separator : Bool
   warn_duplicate_keys : Bool
   warn_unknown_preamble : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn ParseOptions::default() -> Self
+pub fn ParseOptions::equal(Self, Self) -> Bool
+pub fn ParseOptions::not_equal(Self, Self) -> Bool
+pub fn ParseOptions::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ParseResult {
   config : EditorConfig
   diagnostics : Array[Diagnostic]
-} derive(Eq, @debug.Debug)
+}
+pub fn ParseResult::equal(Self, Self) -> Bool
+pub fn ParseResult::not_equal(Self, Self) -> Bool
+pub fn ParseResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Property {
   key : String
   value : String
@@ -242,61 +315,89 @@ pub(all) struct Property {
   raw_value : String
   source : SourceLocation
   span : SourceSpan
-} derive(Eq, @debug.Debug)
+}
+pub fn Property::equal(Self, Self) -> Bool
+pub fn Property::not_equal(Self, Self) -> Bool
+pub fn Property::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PropertyKind {
   Choice(Array[String])
   Boolean
   PositiveInteger
   PositiveIntegerOrTab
   FreeText
-} derive(Eq, @debug.Debug)
+}
+pub fn PropertyKind::equal(Self, Self) -> Bool
+pub fn PropertyKind::not_equal(Self, Self) -> Bool
+pub fn PropertyKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct PropertySchema {
   name : String
   kind : PropertyKind
   description : String
   standard : Bool
-} derive(Eq, @debug.Debug)
+}
+pub fn PropertySchema::equal(Self, Self) -> Bool
+pub fn PropertySchema::not_equal(Self, Self) -> Bool
+pub fn PropertySchema::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct PropertyStep {
   key : String
   value : String
   config_path : String
   pattern : String
-  line : Int
+  line : Int32
   action : String
-} derive(Eq, @debug.Debug)
+}
+pub fn PropertyStep::equal(Self, Self) -> Bool
+pub fn PropertyStep::not_equal(Self, Self) -> Bool
+pub fn PropertyStep::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct QualityReport {
-  score : Int
+  score : Int32
   grade : String
   stats : QualityStats
   findings : Array[Finding]
-} derive(Eq, @debug.Debug)
+}
+pub fn QualityReport::equal(Self, Self) -> Bool
 pub fn QualityReport::has_blockers(Self) -> Bool
+pub fn QualityReport::not_equal(Self, Self) -> Bool
 pub fn QualityReport::summary_zh(Self) -> String
+pub fn QualityReport::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct QualityStats {
-  sections : Int
-  properties : Int
-  standard_properties : Int
-  custom_properties : Int
-  errors : Int
-  warnings : Int
-  information : Int
-} derive(Eq, @debug.Debug)
+  sections : Int32
+  properties : Int32
+  standard_properties : Int32
+  custom_properties : Int32
+  errors : Int32
+  warnings : Int32
+  information : Int32
+}
+pub fn QualityStats::equal(Self, Self) -> Bool
+pub fn QualityStats::not_equal(Self, Self) -> Bool
+pub fn QualityStats::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Resolution {
   target : String
   properties : Array[ResolvedProperty]
   sections : Array[SectionTrace]
   diagnostics : Array[Diagnostic]
-} derive(Eq, @debug.Debug)
+}
+pub fn Resolution::equal(Self, Self) -> Bool
 pub fn Resolution::explain_zh(Self) -> String
 pub fn Resolution::get(Self, String) -> ResolvedProperty?
+pub fn Resolution::not_equal(Self, Self) -> Bool
 pub fn Resolution::to_json(Self, indent? : Bool) -> String
+pub fn Resolution::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ResolvedProperty {
   key : String
   value : String
@@ -304,62 +405,97 @@ pub(all) struct ResolvedProperty {
   pattern : String
   config_path : String
   history : Array[PropertyStep]
-} derive(Eq, @debug.Debug)
+}
+pub fn ResolvedProperty::equal(Self, Self) -> Bool
+pub fn ResolvedProperty::not_equal(Self, Self) -> Bool
+pub fn ResolvedProperty::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Section {
   pattern : String
   properties : Array[Property]
   source : SourceLocation
   span : SourceSpan
-} derive(Eq, @debug.Debug)
+}
+pub fn Section::equal(Self, Self) -> Bool
+pub fn Section::not_equal(Self, Self) -> Bool
+pub fn Section::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SectionTrace {
   config_path : String
   pattern : String
   matched : Bool
   relative_path : String
-  line : Int
+  line : Int32
   reason : String
-} derive(Eq, @debug.Debug)
+}
+pub fn SectionTrace::equal(Self, Self) -> Bool
+pub fn SectionTrace::not_equal(Self, Self) -> Bool
+pub fn SectionTrace::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Severity {
   Error
   Warning
   Information
-} derive(Eq, @debug.Debug)
+}
+pub fn Severity::equal(Self, Self) -> Bool
 pub fn Severity::label_zh(Self) -> String
+pub fn Severity::not_equal(Self, Self) -> Bool
+pub fn Severity::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SourceLocation {
   file : String
-  line : Int
-  column : Int
-  offset : Int
-} derive(Eq, @debug.Debug)
+  line : Int32
+  column : Int32
+  offset : Int32
+}
+pub fn SourceLocation::equal(Self, Self) -> Bool
+pub fn SourceLocation::not_equal(Self, Self) -> Bool
+pub fn SourceLocation::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SourceSpan {
   start : SourceLocation
   end : SourceLocation
-} derive(Eq, @debug.Debug)
+}
+pub fn SourceSpan::equal(Self, Self) -> Bool
+pub fn SourceSpan::not_equal(Self, Self) -> Bool
+pub fn SourceSpan::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TextEdit {
-  start_offset : Int
-  end_offset : Int
+  start_offset : Int32
+  end_offset : Int32
   replacement : String
   title : String
   safe : Bool
-} derive(Eq, @debug.Debug)
+}
+pub fn TextEdit::equal(Self, Self) -> Bool
+pub fn TextEdit::not_equal(Self, Self) -> Bool
+pub fn TextEdit::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct VirtualFile {
   path : String
   content : String
-} derive(Eq, @debug.Debug)
+}
+pub fn VirtualFile::equal(Self, Self) -> Bool
+pub fn VirtualFile::not_equal(Self, Self) -> Bool
+pub fn VirtualFile::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WorkspaceResult {
   target : String
   discovered_configs : Array[String]
   resolution : Resolution
   diagnostics : Array[Diagnostic]
-} derive(Eq, @debug.Debug)
+}
+pub fn WorkspaceResult::equal(Self, Self) -> Bool
+pub fn WorkspaceResult::not_equal(Self, Self) -> Bool
+pub fn WorkspaceResult::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

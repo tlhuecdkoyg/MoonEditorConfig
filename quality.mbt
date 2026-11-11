@@ -1,13 +1,15 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum FindingCategory {
   Syntax
   Correctness
   Maintainability
   Portability
   Style
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct Finding {
   code : String
   severity : Severity
@@ -16,26 +18,28 @@ pub(all) struct Finding {
   detail : String
   suggestion : String
   span : SourceSpan
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct QualityStats {
-  sections : Int
-  properties : Int
-  standard_properties : Int
-  custom_properties : Int
-  errors : Int
-  warnings : Int
-  information : Int
-} derive(Debug, Eq)
+  sections : Int32
+  properties : Int32
+  standard_properties : Int32
+  custom_properties : Int32
+  errors : Int32
+  warnings : Int32
+  information : Int32
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct QualityReport {
-  score : Int
+  score : Int32
   grade : String
   stats : QualityStats
   findings : Array[Finding]
-} derive(Debug, Eq)
+}
 
 ///|
 fn finding_from_diagnostic(diagnostic : Diagnostic) -> Finding {
@@ -65,11 +69,11 @@ fn push_finding(
   suggestion : String,
   span : SourceSpan,
 ) -> Unit {
-  findings.push({ code, severity, category, title, detail, suggestion, span })
+  findings.push({ code, severity, category, title, detail, suggestion, span, })
 }
 
 ///|
-fn count_properties(config : EditorConfig) -> Int {
+fn count_properties(config : EditorConfig) -> Int32 {
   let mut count = config.preamble.length()
   for section in config.sections {
     count += section.properties.length()
@@ -272,7 +276,7 @@ fn report_stats(
 }
 
 ///|
-fn quality_grade(score : Int) -> String {
+fn quality_grade(score : Int32) -> String {
   if score >= 95 {
     "优秀"
   } else if score >= 85 {
@@ -290,7 +294,7 @@ fn quality_grade(score : Int) -> String {
 /// Perform a static quality audit without changing the source document.
 pub fn audit(
   config : EditorConfig,
-  initial? : Array[Diagnostic] = [],
+  initial~ : Array[Diagnostic] = [],
 ) -> QualityReport {
   let findings : Array[Finding] = []
   for diagnostic in initial {
@@ -311,7 +315,7 @@ pub fn audit(
   stats.errors * 22 -
   stats.warnings * 8 -
   stats.information * 2).clamp(min=0, max=100)
-  { score, grade: quality_grade(score), stats, findings }
+  { score, grade: quality_grade(score), stats, findings, }
 }
 
 ///|

@@ -1,0 +1,4 @@
+# Keep the runnable EditorConfig fixtures in published source archives.
+!/.editorconfig
+!/src/.editorconfig
+!/.moonignore

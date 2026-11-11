@@ -11,7 +11,7 @@
 
 name = "tlhuecdkoyg/MoonEditorConfig"
 
-version = "0.1.0"
+version = "0.1.1"
 
 readme = "README.mbt.md"
 
@@ -26,5 +26,5 @@ preferred_target = "native"
 description = "An explainable EditorConfig core and style diagnostics toolkit for MoonBit projects."
 
 import {
-  "moonbitlang/x@0.5.1",
+  "moonbitlang/x@0.5.7",
 }

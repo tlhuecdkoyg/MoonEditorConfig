@@ -24,7 +24,7 @@ pub fn studio_snapshot(source : String, target : String) -> String {
   let quality = audit(parsed.config, initial=parsed.diagnostics)
   let fixes = plan_fixes(source)
   let resolution = resolve_layers(
-    [{ path: "/.editorconfig", directory: "/", config: parsed.config }],
+    [{ path: "/.editorconfig", directory: "/", config: parsed.config, }],
     "/" + normalize_path(target),
   )
   for diagnostic in parsed.diagnostics {

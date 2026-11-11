@@ -34,7 +34,7 @@ pub fn Diagnostic::render_zh(self : Diagnostic) -> String {
 
 ///|
 pub fn Resolution::explain_zh(self : Resolution) -> String {
-  let output = StringBuilder::new()
+  let output = StringBuilder()
   output.write_string("目标文件：" + self.target + "\n\n")
   output.write_string(
     "最终配置（" + self.properties.length().to_string() + " 项）\n",

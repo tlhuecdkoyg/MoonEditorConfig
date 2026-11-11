@@ -70,7 +70,7 @@ test "json/resolution output has stable fields" {
       "/repo/.editorconfig", "[*]\nindent_size = 2\n",
     ).config
   let resolution = @MoonEditorConfig.resolve_layers(
-    [{ path: "/repo/.editorconfig", directory: "/repo", config }],
+    [{ path: "/repo/.editorconfig", directory: "/repo", config, }],
     "/repo/main.mbt",
   )
   let json = resolution.to_json()
@@ -86,7 +86,7 @@ test "json/escapes custom values" {
       "/repo/.editorconfig", "[*]\ncustom = say \"hello\" \\\\ now\n",
     ).config
   let resolution = @MoonEditorConfig.resolve_layers(
-    [{ path: "/repo/.editorconfig", directory: "/repo", config }],
+    [{ path: "/repo/.editorconfig", directory: "/repo", config, }],
     "/repo/file",
   )
   let json = resolution.to_json()
@@ -119,7 +119,7 @@ test "report/explanation includes property history and traces" {
       "/repo/.editorconfig", "[*]\nindent_size = 2\n",
     ).config
   let resolution = @MoonEditorConfig.resolve_layers(
-    [{ path: "/repo/.editorconfig", directory: "/repo", config }],
+    [{ path: "/repo/.editorconfig", directory: "/repo", config, }],
     "/repo/main.mbt",
   )
   let report = resolution.explain_zh()
