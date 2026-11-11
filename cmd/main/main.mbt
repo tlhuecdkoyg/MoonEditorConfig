@@ -304,7 +304,7 @@ fn run_conflicts(path : String) -> Unit {
 ///|
 fn main {
   match @env.args() {
-    [_, "--version"] | [_, "-V"] => println("MoonEditorConfig 0.1.1")
+    [_, "--version"] | [_, "-V"] => println("MoonEditorConfig 0.1.2")
     [_, "check", path] => run_check(path)
     [_, "resolve", path] => run_resolve(path, false)
     [_, "resolve", path, "--json"] => run_resolve(path, true)

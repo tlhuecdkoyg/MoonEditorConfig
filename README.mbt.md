@@ -1,6 +1,6 @@
 # MoonEditorConfig
 
-当前维护版本：`0.1.1`。
+当前维护版本：`0.1.2`。
 
 MoonEditorConfig 是使用 MoonBit 编写的 EditorConfig 解析、验证、配置解析与
 来源追踪工具。它既可以作为 MoonBit 库使用，也提供中文 CLI 和完全在本地运行的
@@ -33,7 +33,8 @@ MoonEditorConfig 是使用 MoonBit 编写的 EditorConfig 解析、验证、配�
 - 启动 Studio 时需要 Node.js；本项目环境已包含
   `D:\conda\environments\moonbit\node.exe`
 
-2026-11-11 的兼容维护及验证范围见[维护记录](docs/MAINTENANCE-20261111.md)；
+2026-11-11 的功能复查与回归修复见[复查记录](docs/RECHECK-20261111.md)，
+此前的工具链兼容维护见[维护记录](docs/MAINTENANCE-20261111.md)；
 首次本地迁移的历史结果见[工具链升级记录](docs/TOOLCHAIN-20261109.md)。
 
 检查环境：
@@ -138,6 +139,9 @@ Studio 默认中文，提供实时编辑、健康评分、最终属性、来源�
 诊断跳转、格式化和 JSON 报告导出。所有分析都由浏览器中的 MoonBit/JS 引擎
 执行，配置内容不会上传。
 
+真实 Chrome 的诊断行号、点击跳转、目标切换、格式化和主题持久化回归可按
+[浏览器验证说明](docs/STUDIO-BROWSER-TEST.md)执行。
+
 端口被占用时可以先设置：
 
 ```powershell
@@ -230,6 +234,11 @@ GitHub Actions 配置在 Linux 上执行相同的后端检查，并使用 Node.j
 
 当前版本专注于 Core 行为和诊断工具，不包含具体编辑器插件。Glob 重叠分析通过
 生成具体见证路径保守报告：没有找到见证不代表两个任意 Glob 在数学上完全不相交。
+
+Glob 的数值范围端点支持有符号 `Int64`，单个范围最多展开 1,001 个值；越界或超出
+展开上限的范围保留为字面量。降序范围是保留的兼容扩展。字符通配及字符集合按
+UTF-16 码元匹配，单个 `?` 不匹配由两个码元组成的补充平面字符（如部分 emoji）；
+本项目尚未承诺对规范全部测试用例的完整兼容。
 
 第三方规范、依赖和测试来源见 [THIRD_PARTY.md](THIRD_PARTY.md)。
 

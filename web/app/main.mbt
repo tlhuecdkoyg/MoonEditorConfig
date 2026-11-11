@@ -51,8 +51,8 @@ extern "js" fn mount_studio(analyze : (String, String) -> String) -> Unit =
   #|       return;
   #|     }
   #|     box.innerHTML = items.map(item => `
-  #|       <button class="diagnostic ${item.severity}" data-line="${item.line}">
-  #|         <span>${escapeHtml(item.code)} · 第 ${item.line} 行</span>
+  #|       <button class="diagnostic ${item.severity}" data-line="${item.start.line}">
+  #|         <span>${escapeHtml(item.code)} · 第 ${item.start.line} 行</span>
   #|         <strong>${escapeHtml(item.message)}</strong>
   #|         <small>${escapeHtml(item.hint)}</small>
   #|       </button>`).join("");

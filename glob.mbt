@@ -24,15 +24,22 @@ pub(all) struct GlobProgram {
 ///|
 fn find_closing_brace(pattern : String, start : Int32) -> Int32? {
   let mut escaped = false
-  for index in start..<pattern.length() {
+  let mut index = start
+  while index < pattern.length() {
     let code = pattern[index]
     if escaped {
       escaped = false
     } else if code == '\\' {
       escaped = true
+    } else if code == '[' {
+      if character_class_end(pattern, index) is Some(next) {
+        index = next
+        continue
+      }
     } else if code == '}' {
       return Some(index)
     }
+    index += 1
   }
   None
 }
@@ -42,45 +49,61 @@ fn split_brace_items(content : String) -> Array[String] {
   let items : Array[String] = []
   let mut start = 0
   let mut escaped = false
-  for index in 0..<content.length() {
+  let mut index = 0
+  while index < content.length() {
     let code = content[index]
     if escaped {
       escaped = false
     } else if code == '\\' {
       escaped = true
+    } else if code == '[' {
+      if character_class_end(content, index) is Some(next) {
+        index = next
+        continue
+      }
     } else if code == ',' {
       items.push(content[start:index].to_owned())
       start = index + 1
     }
+    index += 1
   }
   items.push(content[start:].to_owned())
   items
 }
 
 ///|
-fn parse_decimal(value : String) -> Int32? {
+fn parse_decimal(value : String) -> Int64? {
   if value == "" {
     return None
   }
-  let mut sign = 1
+  let negative = value[0] == '-'
   let mut index = 0
-  if value[0] == '-' {
-    sign = -1
+  if negative {
     index = 1
   }
   if index == value.length() {
     return None
   }
-  let mut result = 0
+  // Accumulate negatively so the asymmetric Int64 minimum is representable.
+  let limit = if negative {
+    -9223372036854775808L
+  } else {
+    -9223372036854775807L
+  }
+  let mut result = 0L
   while index < value.length() {
     let code = value[index]
     if code < '0' || code > '9' {
       return None
     }
-    result = result * 10 + code.to_int() - ('0' : UInt16).to_int()
+    let digit = (code.to_int() - ('0' : UInt16).to_int()).to_int64()
+    if result < (limit + digit) / 10L {
+      return None
+    }
+    result = result * 10L - digit
     index += 1
   }
-  Some(result * sign)
+  Some(if negative { result } else { -result })
 }
 
 ///|
@@ -94,20 +117,19 @@ fn expand_numeric_range(content : String) -> Array[String]? {
       guard parse_decimal(content[separator + 2:].to_owned()) is Some(finish) else {
         return None
       }
-      if (start - finish).abs() > 1000 {
-        return None
-      }
       let values : Array[String] = []
-      if start <= finish {
-        for value in start..<=finish {
-          values.push(value.to_string())
+      let mut value = start
+      // Count the bounded output rather than subtracting possibly extreme
+      // endpoints. Never step past the endpoint, including Int64 min/max.
+      for _ in 0..<1001 {
+        values.push(value.to_string())
+        if value == finish {
+          return Some(values)
         }
-      } else {
-        for value in start>=..finish {
-          values.push(value.to_string())
-        }
+        value = if value < finish { value + 1L } else { value - 1L }
       }
-      Some(values)
+      // Unsupported wide ranges retain the existing literal fallback.
+      None
     }
   }
 }
@@ -115,15 +137,24 @@ fn expand_numeric_range(content : String) -> Array[String]? {
 ///|
 fn expand_braces_once(pattern : String) -> Array[String]? {
   let mut escaped = false
-  for index in 0..<pattern.length() {
+  let mut index = 0
+  while index < pattern.length() {
     let code = pattern[index]
     if escaped {
       escaped = false
+      index += 1
       continue
     }
     if code == '\\' {
       escaped = true
+      index += 1
       continue
+    }
+    if code == '[' {
+      if character_class_end(pattern, index) is Some(next) {
+        index = next
+        continue
+      }
     }
     if code == '{' {
       guard find_closing_brace(pattern, index + 1) is Some(end) else {
@@ -145,6 +176,7 @@ fn expand_braces_once(pattern : String) -> Array[String]? {
       }
       return Some(expanded)
     }
+    index += 1
   }
   None
 }
@@ -209,10 +241,19 @@ fn parse_character_class(
 }
 
 ///|
+fn character_class_end(pattern : String, start : Int32) -> Int32? {
+  let (_, next, issue) = parse_character_class(pattern, start)
+  match issue {
+    None => Some(next)
+    Some(_) => None
+  }
+}
+
+///|
 fn compile_alternative(pattern : String) -> (Array[GlobToken], Array[String]) {
   let tokens : Array[GlobToken] = []
   let diagnostics : Array[String] = []
-  let mut index = 0
+  let mut index = if pattern.has_prefix("/") { 1 } else { 0 }
   while index < pattern.length() {
     match pattern[index] {
       '/' => {
@@ -379,7 +420,7 @@ pub fn GlobProgram::matches(self : GlobProgram, path : String) -> Bool {
 ///|
 pub fn glob_matches(pattern : String, path : String) -> Bool {
   let normalized = normalize_path(path)
-  let subject = if pattern.contains("/") || pattern.contains("\\") {
+  let subject = if pattern.contains("/") {
     normalized
   } else {
     basename(normalized)

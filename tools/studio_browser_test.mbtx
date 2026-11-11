@@ -1,0 +1,300 @@
+---
+import {
+  "moonbitlang/core/async" @async,
+  "moonbitlang/core/async/fs" @fs,
+  "moonbitlang/core/async/http" @http,
+  "moonbitlang/core/async/process" @process,
+  "moonbitlang/core/async/websocket" @ws,
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/core/json" @json,
+  "moonbitlang/core/string" @string,
+}
+---
+
+///|
+/// Real installed Chromium; see docs/STUDIO-BROWSER-TEST.md.
+fn field(value : @json.Json, key : String) -> @json.Json {
+  match value {
+    Object(fields) => fields.get(key).unwrap_or(@json.null)
+    _ => @json.null
+  }
+}
+
+///|
+fn as_text(value : @json.Json) -> String raise {
+  match value {
+    String(text) => text
+    _ => fail("Expected a JSON string: " + value.stringify())
+  }
+}
+
+///|
+fn report(name : String, value : @json.Json) -> Unit {
+  let record : @json.Json = { "name": name, "result": value }
+  println(record.stringify())
+}
+
+///|
+priv struct Cdp {
+  socket : @ws.Conn
+  mut sequence : Int32
+}
+
+///|
+async fn Cdp::call(
+  self : Cdp,
+  command : String,
+  parameters : @json.Json,
+) -> @json.Json {
+  self.sequence += 1
+  let sequence = self.sequence
+  let request : @json.Json = {
+    "id": sequence,
+    "method": command,
+    "params": parameters,
+  }
+  let wire = request.stringify()
+  self.socket.send_text(wire.unsafe_view(start=0, end=wire.length()))
+  @async.with_timeout(5000, async fn() {
+    for ;; {
+      let message = self.socket.recv()
+      let response = @json.parse(
+        @utf8.decode(message.read_all(), ignore_bom=false),
+      )
+      match field(response, "id") {
+        Number(id, ..) if id == sequence.to_double() => {
+          if field(response, "error") != @json.null {
+            fail("CDP " + command + ": " + response.stringify())
+          }
+          return field(response, "result")
+        }
+        _ => ()
+      }
+    }
+  })
+}
+
+///|
+async fn Cdp::evaluate(self : Cdp, expression : String) -> @json.Json {
+  let response = self.call("Runtime.evaluate", {
+    "expression": expression,
+    "returnByValue": true,
+    "awaitPromise": true,
+  })
+  if field(response, "exceptionDetails") != @json.null {
+    fail("DOM evaluation failed: " + response.stringify())
+  }
+  field(field(response, "result"), "value")
+}
+
+///|
+async fn Cdp::wait_for(self : Cdp, expression : String) -> Unit {
+  for _ in 0..<50 {
+    let ready = try self.evaluate(expression) == @json.Json(true) catch {
+      _ => false
+    }
+    if ready {
+      return
+    }
+    @async.sleep(100)
+  }
+  fail("Studio did not reach the expected DOM state: " + expression)
+}
+
+///|
+async fn Cdp::check(self : Cdp, name : String, expression : String) -> Unit {
+  let value = self.evaluate(expression)
+  report(name, value)
+  if field(value, "ok") != @json.Json(true) {
+    fail("Studio browser regression: " + name)
+  }
+}
+
+///|
+async fn main {
+  let root = @env.get_env_var("MOONEDITORCONFIG_ROOT").unwrap_or(
+    @env.current_dir().unwrap_or("."),
+  )
+  let browser_path = @env.get_env_var("MOONEDITORCONFIG_BROWSER").unwrap_or("")
+  if browser_path.is_empty() {
+    fail(
+      "Set MOONEDITORCONFIG_BROWSER to an installed Chrome/Chromium/Edge executable; no browser is downloaded",
+    )
+  }
+  let node_path = @env.get_env_var("MOONEDITORCONFIG_NODE").unwrap_or("node")
+  let port = @env.get_env_var("MOONEDITORCONFIG_TEST_PORT").unwrap_or("18765")
+  let parsed_port = @string.parse_int(
+    port.unsafe_view(start=0, end=port.length()),
+  )
+  if parsed_port < 1024 || parsed_port > 65535 {
+    fail("Invalid test HTTP port")
+  }
+  let directory = root + "/_build/studio-browser/" + @env.now().to_string()
+  @fs.mkdir(
+    directory.unsafe_view(start=0, end=directory.length()),
+    recursive=true,
+  )
+  report("artifacts", { "directory": directory })
+  @async.with_timeout(60000, async fn() {
+    @async.with_task_group(async fn(group) {
+      let server_log = directory + "/server.log"
+      let server_error = directory + "/server-error.log"
+      let server = @process.spawn(
+        group,
+        node_path.unsafe_view(start=0, end=node_path.length()),
+        ["tools/studio_server.mjs"],
+        cwd=root.unsafe_view(start=0, end=root.length()),
+        extra_env={ "MOONEDITORCONFIG_PORT": port },
+        stdout=ToFile(server_log.unsafe_view(start=0, end=server_log.length())),
+        stderr=ToFile(
+          server_error.unsafe_view(start=0, end=server_error.length()),
+        ),
+        no_console_window=true,
+        no_wait=true,
+        cancel_handler=@process.hard_cancel(),
+      )
+      defer server.cancel()
+      let profile = directory + "/profile"
+      let browser_error = directory + "/browser-error.log"
+      let chrome = @process.spawn(
+        group,
+        browser_path.unsafe_view(start=0, end=browser_path.length()),
+        [
+          "--headless=new",
+          "--no-first-run",
+          "--no-default-browser-check",
+          "--disable-extensions",
+          "--disable-gpu",
+          "--remote-debugging-address=127.0.0.1",
+          "--remote-debugging-port=0",
+          "--user-data-dir=" + profile,
+          "--window-size=1440,1200",
+          "about:blank",
+        ],
+        stdout=Discard,
+        stderr=ToFile(
+          browser_error.unsafe_view(start=0, end=browser_error.length()),
+        ),
+        no_console_window=true,
+        no_wait=true,
+        cancel_handler=@process.hard_cancel(),
+      )
+      defer chrome.cancel()
+      report("owned-processes", { "server": server.pid, "browser": chrome.pid })
+      let active_port = profile + "/DevToolsActivePort"
+      let mut debug_port = ""
+      for _ in 0..<50 {
+        if chrome.try_wait() is Some(code) {
+          fail("Browser exited before CDP startup: " + code.to_string())
+        }
+        debug_port = @fs.read_text(
+            active_port.unsafe_view(start=0, end=active_port.length()),
+          )
+          .split("\n")
+          .next()
+          .unwrap_or("")
+          .trim()
+          .to_owned() catch {
+            _ => ""
+          }
+        if !debug_port.is_empty() {
+          break
+        }
+        @async.sleep(100)
+      }
+      if debug_port.is_empty() {
+        fail("No DevToolsActivePort in the private profile")
+      }
+      let endpoint_url = "http://127.0.0.1:" + debug_port + "/json/list"
+      let (_, pages) = @http.get_json(
+        endpoint_url.unsafe_view(start=0, end=endpoint_url.length()),
+      )
+      let mut endpoint = ""
+      if pages is Array(entries) {
+        for page in entries {
+          if field(page, "type") == @json.Json("page") {
+            endpoint = as_text(field(page, "webSocketDebuggerUrl"))
+          }
+        }
+      }
+      if endpoint.is_empty() {
+        fail("Chrome did not expose a page target")
+      }
+      let socket = @ws.Conn::connect(endpoint)
+      defer socket.close()
+      let browser = Cdp::{ socket, sequence: 0, }
+      browser.call("Page.enable", {}) |> ignore
+      browser.call("Runtime.enable", {}) |> ignore
+      browser.call("Page.navigate", {
+        "url": "http://127.0.0.1:" + port + "/web/index.html",
+      })
+      |> ignore
+      browser.wait_for("document.querySelector('#status.ready')!==null")
+      if server.try_wait() is Some(code) {
+        fail(
+          "Owned Studio server exited (possibly port in use): " +
+          code.to_string(),
+        )
+      }
+      browser.evaluate(
+        "document.querySelector('[data-example=broken]').click();true",
+      )
+      |> ignore
+      browser.wait_for(
+        "document.querySelector('#status.ready')!==null&&document.querySelectorAll('.diagnostic').length===10",
+      )
+      let label_check =
+        #|(()=>{const buttons=Array.from(document.querySelectorAll('.diagnostic'));return {ok:buttons.length===10&&buttons.every(x=>/^\d+$/.test(x.dataset.line)&&Number(x.dataset.line)>0&&!x.textContent.includes('undefined')),lines:buttons.map(x=>Number(x.dataset.line))}})()
+      browser.check("diagnostic-line-labels", label_check)
+      for line in [1, 4, 7] {
+        let line_text = line.to_string()
+        let click_check =
+          #|(()=>{const line=LINE;const button=document.querySelector('.diagnostic[data-line="'+line+'"]');if(!button)return {ok:false,reason:'diagnostic missing'};const source=document.getElementById('source');source.setSelectionRange(5,10);button.click();const rows=source.value.split('\n');const start=rows.slice(0,line-1).reduce((n,row)=>n+row.length+1,0);const end=start+rows[line-1].length;return {ok:document.activeElement===source&&source.selectionStart===start&&source.selectionEnd===end,start:source.selectionStart,end:source.selectionEnd,selected:source.value.slice(source.selectionStart,source.selectionEnd)}})()
+        browser.check(
+          "diagnostic-click-line-" + line.to_string(),
+          click_check.replace(
+            old="LINE",
+            new=line_text.unsafe_view(start=0, end=line_text.length()),
+          ),
+        )
+      }
+      browser.evaluate(
+        "document.querySelector('[data-example=moonbit]').click();true",
+      )
+      |> ignore
+      browser.wait_for(
+        "document.querySelector('#status.ready')!==null&&document.querySelectorAll('.property').length===7",
+      )
+      browser.check(
+        "target-moonbit", "({ok:document.querySelectorAll('.property').length===7,properties:document.querySelectorAll('.property').length})",
+      )
+      browser.evaluate(
+        "document.getElementById('target').value='README.md';document.getElementById('target').dispatchEvent(new Event('input',{bubbles:true}));true",
+      )
+      |> ignore
+      browser.wait_for(
+        "document.querySelector('#status.ready')!==null&&document.querySelectorAll('.property').length===3",
+      )
+      browser.check(
+        "target-markdown", "({ok:document.querySelectorAll('.property').length===3,properties:document.querySelectorAll('.property').length})",
+      )
+      let format_input =
+        #|document.getElementById('source').value='root=true\n[*]\nindent_style=space\nindent_size=2\n';document.getElementById('source').dispatchEvent(new Event('input',{bubbles:true}));true
+      browser.evaluate(format_input) |> ignore
+      browser.wait_for("document.querySelector('#status.ready')!==null")
+      browser.evaluate("document.getElementById('format').click();true")
+      |> ignore
+      let format_check =
+        #|({ok:document.getElementById('source').value==='root = true\n\n[*]\nindent_style = space\nindent_size = 2\n',source:document.getElementById('source').value})
+      browser.check("format", format_check)
+      browser.check(
+        "theme", "(()=>{const root=document.documentElement;const before=root.classList.contains('light');document.getElementById('theme').click();const after=root.classList.contains('light');const saved=localStorage.getItem('mec-theme');document.getElementById('theme').click();return {ok:after!==before&&saved===(after?'light':'dark')&&root.classList.contains('light')===before,before,after,saved}})()",
+      )
+      try browser.call("Browser.close", {}) |> ignore catch {
+        _ => ()
+      }
+      report("complete", { "ok": true })
+    })
+  })
+}

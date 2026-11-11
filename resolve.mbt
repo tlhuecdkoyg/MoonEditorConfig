@@ -35,8 +35,14 @@ fn apply_property(
   property : Property,
   config_path : String,
   pattern : String,
+  unset_keys : Map[String, Bool],
 ) -> Unit {
   let normalized_value = lower_ascii(property.value)
+  if normalized_value == "unset" {
+    unset_keys[property.key] = true
+  } else {
+    ignore(unset_keys.remove(property.key))
+  }
   let step : PropertyStep = {
     key: property.key,
     value: property.value,
@@ -71,29 +77,34 @@ fn apply_property(
 }
 
 ///|
-fn apply_derived_properties(properties : Array[ResolvedProperty]) -> Unit {
+fn apply_derived_properties(
+  properties : Array[ResolvedProperty],
+  unset_keys : Map[String, Bool],
+) -> Unit {
   let indent_index = find_property_index(properties, "indent_size")
   let tab_index = find_property_index(properties, "tab_width")
   match (indent_index, tab_index) {
-    (Some(indent), None) if lower_ascii(properties[indent].value) != "tab" => {
+    (Some(indent), None) => {
       let source = properties[indent]
-      properties.push({
-        key: "tab_width",
-        value: source.value,
-        source: source.source,
-        pattern: source.pattern,
-        config_path: source.config_path,
-        history: [
-          {
-            key: "tab_width",
-            value: source.value,
-            config_path: source.config_path,
-            pattern: source.pattern,
-            line: source.source.line,
-            action: "derived from indent_size",
-          },
-        ],
-      })
+      if !unset_keys.contains("tab_width") && lower_ascii(source.value) != "tab" {
+        properties.push({
+          key: "tab_width",
+          value: source.value,
+          source: source.source,
+          pattern: source.pattern,
+          config_path: source.config_path,
+          history: [
+            {
+              key: "tab_width",
+              value: source.value,
+              config_path: source.config_path,
+              pattern: source.pattern,
+              line: source.source.line,
+              action: "derived from indent_size",
+            },
+          ],
+        })
+      }
     }
     (Some(indent), Some(tab)) if lower_ascii(properties[indent].value) == "tab" => {
       let source = properties[tab]
@@ -139,6 +150,8 @@ pub fn resolve_layers(
   target : String,
 ) -> Resolution {
   let properties : Array[ResolvedProperty] = []
+  // An explicit unset also cancels defaults inferred from another property.
+  let unset_keys : Map[String, Bool] = Map([])
   let traces : Array[SectionTrace] = []
   let diagnostics : Array[Diagnostic] = []
   for layer in sorted_layers(layers) {
@@ -173,13 +186,19 @@ pub fn resolve_layers(
           })
           if matched {
             for property in section.properties {
-              apply_property(properties, property, layer.path, section.pattern)
+              apply_property(
+                properties,
+                property,
+                layer.path,
+                section.pattern,
+                unset_keys,
+              )
             }
           }
         }
     }
   }
-  apply_derived_properties(properties)
+  apply_derived_properties(properties, unset_keys)
   { target: normalize_path(target), properties, sections: traces, diagnostics, }
 }
 
@@ -187,10 +206,17 @@ pub fn resolve_layers(
 /// Compatibility helper for resolving one already parsed document.
 pub fn resolve(config : EditorConfig, path : String) -> Array[ResolvedProperty] {
   let properties : Array[ResolvedProperty] = []
+  let unset_keys : Map[String, Bool] = Map([])
   for section in config.sections {
     if glob_matches(section.pattern, path) {
       for property in section.properties {
-        apply_property(properties, property, config.path, section.pattern)
+        apply_property(
+          properties,
+          property,
+          config.path,
+          section.pattern,
+          unset_keys,
+        )
       }
     }
   }
