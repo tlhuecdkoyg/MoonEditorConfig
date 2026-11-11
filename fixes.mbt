@@ -128,9 +128,12 @@ pub fn apply_edits(source : String, edits : Array[TextEdit]) -> String {
 pub fn plan_fixes(source : String) -> FixPlan {
   let parsed = parse(source)
   let edits : Array[TextEdit] = []
-  match canonical_format_edit(source, parsed.config) {
-    Some(edit) => edits.push(edit)
-    None => ()
+  // Re-rendering a recovered tree would silently remove unparsed error lines.
+  if !has_errors(parsed.diagnostics) {
+    match canonical_format_edit(source, parsed.config) {
+      Some(edit) => edits.push(edit)
+      None => ()
+    }
   }
   match suggested_root_edit(parsed.config) {
     Some(edit) => edits.push(edit)

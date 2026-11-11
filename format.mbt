@@ -23,11 +23,28 @@ fn format_properties(
   }
   let lines : Array[String] = []
   for property in ordered {
-    lines.push(
-      options.indent + property.key + options.separator + property.value,
-    )
+    lines.push(options.indent + format_assignment(property, options))
   }
   lines
+}
+
+///|
+fn escape_formatted_assignment(value : String, key~ : Bool) -> String {
+  let output = StringBuilder()
+  for ch in value {
+    if ch == '\\' || (key && (ch == '=' || ch == ':')) {
+      output.write_char('\\')
+    }
+    output.write_char(ch)
+  }
+  output.to_string()
+}
+
+///|
+fn format_assignment(property : Property, options : FormatOptions) -> String {
+  escape_formatted_assignment(property.key, key=true) +
+  options.separator +
+  escape_formatted_assignment(property.value, key=false)
 }
 
 ///|
@@ -42,7 +59,7 @@ pub fn format_config(
   }
   for property in config.preamble {
     if property.key != "root" {
-      lines.push(property.key + options.separator + property.value)
+      lines.push(format_assignment(property, options))
     }
   }
   if lines.length() > 0 && config.sections.length() > 0 {

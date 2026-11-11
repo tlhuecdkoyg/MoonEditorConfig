@@ -26,7 +26,7 @@ fn ParserState::diagnose(
       line,
       column,
       end_column,
-      self.offset,
+      self.offset + column - 1,
       severity,
       code,
       message,
@@ -109,13 +109,14 @@ fn ParserState::parse_section(
   self : ParserState,
   line : String,
   line_number : Int32,
+  column_base : Int32,
 ) -> Bool {
   guard line.has_prefix("[") else { return false }
   if !line.has_suffix("]") {
     self.diagnose(
       line_number,
-      1,
-      line.length() + 1,
+      column_base + 1,
+      column_base + line.length() + 1,
       Error,
       "EC1001",
       "section header must end with ]",
@@ -127,8 +128,8 @@ fn ParserState::parse_section(
   if pattern == "" {
     self.diagnose(
       line_number,
-      1,
-      line.length() + 1,
+      column_base + 1,
+      column_base + line.length() + 1,
       Error,
       "EC1002",
       "section pattern cannot be empty",
@@ -140,13 +141,18 @@ fn ParserState::parse_section(
   self.current_section = Some({
     pattern,
     properties: [],
-    source: make_location(self.options.path, line_number, 1, self.offset),
+    source: make_location(
+      self.options.path,
+      line_number,
+      column_base + 1,
+      self.offset + column_base,
+    ),
     span: make_span(
       self.options.path,
       line_number,
-      1,
-      line.length() + 1,
-      self.offset,
+      column_base + 1,
+      column_base + line.length() + 1,
+      self.offset + column_base,
     ),
   })
   true
@@ -157,13 +163,14 @@ fn ParserState::parse_assignment(
   self : ParserState,
   line : String,
   line_number : Int32,
+  column_base : Int32,
 ) -> Unit {
   match find_unescaped_separator(line, self.options.allow_colon_separator) {
     None =>
       self.diagnose(
         line_number,
-        1,
-        line.length() + 1,
+        column_base + 1,
+        column_base + line.length() + 1,
         Error,
         "EC1003",
         "expected a key/value assignment",
@@ -185,8 +192,8 @@ fn ParserState::parse_assignment(
       if key == "" {
         self.diagnose(
           line_number,
-          1,
-          separator + 1,
+          column_base + 1,
+          column_base + separator + 1,
           Error,
           "EC1004",
           "property name cannot be empty",
@@ -195,8 +202,8 @@ fn ParserState::parse_assignment(
       } else if value == "" {
         self.diagnose(
           line_number,
-          separator + 2,
-          line.length() + 1,
+          column_base + separator + 2,
+          column_base + line.length() + 1,
           Warning,
           "EC1005",
           "property value is empty",
@@ -210,15 +217,15 @@ fn ParserState::parse_assignment(
           source: make_location(
             self.options.path,
             line_number,
-            key_start + 1,
-            self.offset + key_start,
+            column_base + key_start + 1,
+            self.offset + column_base + key_start,
           ),
           span: make_span(
             self.options.path,
             line_number,
-            key_start + 1,
-            line.length() + 1,
-            self.offset + key_start,
+            column_base + key_start + 1,
+            column_base + line.length() + 1,
+            self.offset + column_base + key_start,
           ),
         })
       } else {
@@ -230,15 +237,15 @@ fn ParserState::parse_assignment(
           source: make_location(
             self.options.path,
             line_number,
-            key_start + 1,
-            self.offset + key_start,
+            column_base + key_start + 1,
+            self.offset + column_base + key_start,
           ),
           span: make_span(
             self.options.path,
             line_number,
-            key_start + 1,
-            line.length() + 1,
-            self.offset + key_start,
+            column_base + key_start + 1,
+            column_base + line.length() + 1,
+            self.offset + column_base + key_start,
           ),
         })
       }
@@ -253,12 +260,13 @@ fn ParserState::parse_line(
   line_number : Int32,
 ) -> Unit {
   let without_bom = strip_utf8_bom(raw_line, line_number == 1)
+  let column_base = raw_line.length() - without_bom.trim_start().length()
   let line = trim_owned(without_bom.trim_end().to_owned())
   if line == "" || line.has_prefix("#") || line.has_prefix(";") {
     return
   }
-  if !self.parse_section(line, line_number) {
-    self.parse_assignment(line, line_number)
+  if !self.parse_section(line, line_number, column_base) {
+    self.parse_assignment(line, line_number, column_base)
   }
 }
 

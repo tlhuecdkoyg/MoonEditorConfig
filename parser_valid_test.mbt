@@ -77,7 +77,7 @@ test "parser/trims surrounding assignment whitespace" {
   let property = result.config.sections[0].properties[0]
   assert_eq(property.key, "indent_size")
   assert_eq(property.value, "2")
-  assert_eq(property.source.column, 1)
+  assert_eq(property.source.column, 3)
 }
 
 ///|

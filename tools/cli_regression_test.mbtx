@@ -1,0 +1,153 @@
+---
+import {
+  "moonbitlang/core/async" @async,
+  "moonbitlang/core/async/fs" @fs,
+  "moonbitlang/core/async/process" @process,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/core/json" @json,
+}
+---
+
+///|
+/// Run from the project root after building the native CLI. Supply its absolute
+/// executable path as an optional script argument, including .exe on Windows.
+async fn expect(
+  executable : String,
+  name : String,
+  args : Array[String],
+  code : Int32,
+  empty_stdout : Bool,
+  has_stderr : Bool,
+) -> String {
+  let result = @async.with_timeout(10000, async fn() {
+    @process.run(
+      executable.unsafe_view(start=0, end=executable.length()),
+      args[:],
+      stdin=Empty,
+      stdout=Collect,
+      stderr=Collect,
+      no_console_window=true,
+    )
+  })
+  let output = result.stdout_text()
+  let error_text = result.stderr_text()
+  assert_eq(result.exit_code, code)
+  assert_eq(output.is_empty(), empty_stdout)
+  assert_eq(!error_text.is_empty(), has_stderr)
+  let report : @json.Json = {
+    "case": name,
+    "code": result.exit_code,
+    "ok": true,
+  }
+  println(report.stringify())
+  output
+}
+
+///|
+async fn write(path : String, text : String) -> Unit {
+  @fs.write_text(
+    path.unsafe_view(start=0, end=path.length()),
+    text.unsafe_view(start=0, end=text.length()),
+  )
+}
+
+///|
+async fn main {
+  let args = @env.args()
+  if args.length() > 2 {
+    fail(
+      "Usage: moon run --target native tools/cli_regression_test.mbtx [absolute-native-CLI-path]",
+    )
+  }
+  let executable = if args.length() == 2 {
+    args[1]
+  } else {
+    let base = @env.current_dir().unwrap_or(".") +
+      "/_build/native/release/build/cmd/main/main"
+    if @fs.exists(base) {
+      base
+    } else {
+      base + ".exe"
+    }
+  }
+  let directory = @env.current_dir().unwrap_or(".") +
+    "/_build/cli-regression/" +
+    @env.now().to_string()
+  let io_child = directory + "/io/child/.editorconfig"
+  let invalid = directory + "/invalid"
+  let valid = directory + "/valid"
+  for path in [io_child, invalid, valid] {
+    @fs.mkdir(path.unsafe_view(start=0, end=path.length()), recursive=true)
+  }
+  write(directory + "/io/.editorconfig", "root=true\n[*]\nindent_size=8\n")
+  write(invalid + "/.editorconfig", "root=maybe\n[*]\nindent_size=2\n")
+  write(valid + "/.editorconfig", "root=true\n[*]\nindent_size=2\n")
+  @async.with_timeout(60000, async fn() {
+    for command in ["resolve", "query", "explain"] {
+      let args = [command, directory + "/io/child/main.mbt"]
+      if command == "resolve" {
+        args.push("--json")
+      }
+      if command == "query" {
+        args.push("indent_size")
+      }
+      expect(executable, "unreadable-config-" + command, args, 2, true, true)
+      |> ignore
+    }
+    expect(
+      executable,
+      "query-invalid-config",
+      ["query", invalid + "/main.mbt", "indent_size"],
+      1,
+      true,
+      true,
+    )
+    |> ignore
+    let bad_resolution = expect(
+      executable,
+      "resolve-invalid-config-json",
+      ["resolve", invalid + "/main.mbt", "--json"],
+      1,
+      false,
+      false,
+    )
+    @json.parse(bad_resolution) |> ignore
+    let good_resolution = expect(
+      executable,
+      "resolve-valid-json",
+      ["resolve", valid + "/main.mbt", "--json"],
+      0,
+      false,
+      false,
+    )
+    @json.parse(good_resolution) |> ignore
+    let queried = expect(
+      executable,
+      "query-valid",
+      ["query", valid + "/main.mbt", "indent_size"],
+      0,
+      false,
+      false,
+    )
+    assert_true(queried.has_prefix("2\n") || queried.has_prefix("2\r\n"))
+    expect(
+      executable,
+      "query-missing-property",
+      ["query", valid + "/main.mbt", "unknown_property"],
+      1,
+      true,
+      true,
+    )
+    |> ignore
+    expect(
+      executable,
+      "check-missing-file",
+      ["check", valid + "/missing"],
+      2,
+      true,
+      true,
+    )
+    |> ignore
+    expect(executable, "bad-arguments", ["resolve"], 2, true, true) |> ignore
+  })
+}

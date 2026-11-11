@@ -21,9 +21,9 @@ fn usage() -> String {
 
 ///|
 fn fail_usage(message : String) -> Unit {
-  println("错误：" + message)
-  println("")
-  println(usage())
+  eprintln("错误：" + message)
+  eprintln("")
+  eprintln(usage())
   @sys.exit(2)
 }
 
@@ -31,7 +31,7 @@ fn fail_usage(message : String) -> Unit {
 fn read_source(path : String) -> String? {
   Some(@fs.read_file_to_string(path)) catch {
     _ => {
-      println("错误：无法读取文件 " + path)
+      eprintln("错误：无法读取文件 " + path)
       None
     }
   }
@@ -92,7 +92,7 @@ fn discover_layers(
             finished = true
           }
         }
-        None => ()
+        None => @sys.exit(2)
       }
     }
     if !finished {
@@ -177,6 +177,13 @@ fn run_explain(path : String) -> Unit {
 ///|
 fn run_query(path : String, key : String) -> Unit {
   let resolution = resolve_target(path)
+  if @lib.has_errors(resolution.diagnostics) {
+    for diagnostic in resolution.diagnostics {
+      eprintln(diagnostic.render_zh())
+    }
+    @sys.exit(1)
+    return
+  }
   match resolution.get(key) {
     Some(property) => {
       println(property.value)
@@ -191,7 +198,7 @@ fn run_query(path : String, key : String) -> Unit {
       )
     }
     None => {
-      println("未解析到属性：" + key)
+      eprintln("未解析到属性：" + key)
       @sys.exit(1)
     }
   }
@@ -231,7 +238,7 @@ fn run_format(path : String, write : Bool) -> Unit {
   if write {
     try @fs.write_string_to_file(path, formatted) catch {
       _ => {
-        println("错误：无法写入文件 " + path)
+        eprintln("错误：无法写入文件 " + path)
         @sys.exit(2)
       }
     } noraise {
@@ -304,7 +311,7 @@ fn run_conflicts(path : String) -> Unit {
 ///|
 fn main {
   match @env.args() {
-    [_, "--version"] | [_, "-V"] => println("MoonEditorConfig 0.1.2")
+    [_, "--version"] | [_, "-V"] => println("MoonEditorConfig 0.1.3")
     [_, "check", path] => run_check(path)
     [_, "resolve", path] => run_resolve(path, false)
     [_, "resolve", path, "--json"] => run_resolve(path, true)
